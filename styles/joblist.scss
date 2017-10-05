@@ -1,0 +1,31 @@
+#jobs-list {
+
+  #jobs-search {
+    margin: 1em 0;
+  }
+
+  table {
+    width: 100%;
+    margin: 1em 0;
+
+    * {
+      text-align: center;
+    }
+
+    tbody {
+      &:before {
+        content: "";
+        display: block;
+        height: 0.25em;
+      }
+    }
+
+    a {
+      font-family: monospace;
+    }
+
+    button {
+      @extend .btn-link;
+    }
+  }
+}

@@ -1,0 +1,40 @@
+#navbar {
+  line-height: $navbar-height;
+
+  > * {
+    display: inline;
+  }
+
+  #title {
+    padding-right: 1em;
+    font-weight: bold;
+  }
+
+  nav {
+    > * {
+      padding: 0 1em;
+    }
+
+    a {
+      color: black;
+      text-decoration: none;
+
+      &:hover {
+        color: #444;
+      }
+    }
+
+    .current-page {
+      background-color: red;
+    }
+  }
+
+  .navbar-right {
+    float: right;
+  }
+
+  #navbar-username {
+    font-weight: bold;
+    margin-right: 1em;
+  }
+}
