@@ -9,6 +9,9 @@ var ExtractTextPlugin = require('extract-text-webpack-plugin');
 const HOST = process.env.HOST || "0.0.0.0";
 const PORT = process.env.PORT || "8090";
 
+const SITE_ROOT = "/";
+const API_PREFIX = SITE_ROOT + "api/";
+
 loaders.push({
   test: /\.scss$/,
   loaders: ['style-loader', 'css-loader?importLoaders=1', 'sass-loader'],
@@ -67,6 +70,9 @@ module.exports = {
         css: ['style.css'],
         js: [ "bundle.js"],
       }
+    }),
+    new webpack.DefinePlugin({
+      "API_PREFIX": API_PREFIX,
     }),
   ]
 };

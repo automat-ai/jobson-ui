@@ -24,24 +24,35 @@ export class AboutComponent extends React.Component {
 
 		return (
 			<div>
-				<h1>About</h1>
-				<code>jobson-ui</code>
+				<h1>About Jobson UI</h1>
+				<a href="https://github.com/adamkewley/jobson-ui">
+					Source code (Apache v2 license)
+				</a>
 
 				<p>
-					Jobson and Jobson UI were developed on a project where researchers and
-					developers work together on a variety of data pipelines. We spent a
-					lot of time handling data requests, explaining how to install
-					applications, explaining how to run applications, tracing requests,
-					etc.
+					Jobson UI is a frontend for <a href="https://github.com/adamkewley/jobson">Jobson</a>.
+				</p>
 
-					Attempts to systemize the process with bespoke web servers
-					worked, but those systems were brittle and needed redevelopment every
-					time a new workflow came along. Jobson was developed to generate a
-					self-explanatory, standard API that is simple, can be changed *very*
-					easily (spec files), and contained enough information (names, descriptions) for frontends to
-					generate easy-to-use UIs.
+				<p>
+					Jobson and Jobson UI were developed for a project where researchers, data
+					scientists, and developers work together on huge data pipelines. A lot of time
+					was spent explaining how to install/run applications, handling data requests, and
+					tracing data requests.
+				</p>
 
-					Jobson UI is a web UI that uses the Jobson API. It is a set of static web assets compiled with Webpack.
+				<p>
+
+					Earlier attempts to systemize around the issue with hand-coded web servers
+					worked fine, but they were brittle and needed redevelopment every
+					time a new workflow came along. <a href="https://github.com/adamkewley/jobson">Jobson</a> automates around
+					the most common patterns, such as developing a persistence layer, designing an
+					API, designing a frontend, and delivering outputs.
+				</p>
+
+				<p>
+					Jobson was inspired by a mixture of the Linux kernel (processes, IO, signals),
+					Ruby on Rails (CLI configuration generation), declarative programming
+					(spec files), and functional reactive programming (data streams, websockets).
 				</p>
 			</div>
 		);

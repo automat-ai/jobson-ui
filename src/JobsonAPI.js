@@ -26,23 +26,24 @@ export class JobsonAPI {
   }
 
   fetchJobSpecSummaries() {
-    return this.http.get("/api/v1/specs").then(resp => JSON.parse(resp).entries);
+    return this.http.get(`${API_PREFIX}v1/specs`).then(resp => JSON.parse(resp).entries);
   }
+
+	fetchJobSpec(id) {
+		return this.http.get(`${API_PREFIX}v1/specs/${id}`).then(resp => JSON.parse(resp));
+	}
+
 
   fetchJobSummaries(query = "", page = 0) {
     if (query.length > 0) {
-      return this.http.get(`/api/v1/jobs?query=${query}&page=${page}`).then(resp => JSON.parse(resp));
+      return this.http.get(`${API_PREFIX}v1/jobs?query=${query}&page=${page}`).then(resp => JSON.parse(resp));
     } else {
-      return this.http.get(`/api/v1/jobs?page=${page}`).then(resp => JSON.parse(resp));
+      return this.http.get(`${API_PREFIX}v1/jobs?page=${page}`).then(resp => JSON.parse(resp));
     }
   }
 
-  fetchJobSpec(id) {
-    return this.http.get(`/api/v1/specs/${id}`).then(resp => JSON.parse(resp));
-  }
-
   submitJobRequest(jobRequest) {
-    return this.http.post("/api/v1/jobs", jobRequest).then(resp => JSON.parse(resp));
+    return this.http.post(`${API_PREFIX}v1/jobs`, jobRequest).then(resp => JSON.parse(resp));
   }
 
   createObservableSocket(url) {
@@ -58,37 +59,37 @@ export class JobsonAPI {
   }
 
   onAllJobStatusChanges() {
-    const url = "ws://" + window.location.host + "/api/v1/jobs/events";
+    const url = "ws://" + window.location.host + `${API_PREFIX}v1/jobs/events`;
     return this.createObservableSocket(url).map(e => JSON.parse(e.data));
   }
 
   fetchJobDetailsById(jobId) {
-    return this.http.get(`/api/v1/jobs/${jobId}`).then(resp => JSON.parse(resp));
+    return this.http.get(`${API_PREFIX}v1/jobs/${jobId}`).then(resp => JSON.parse(resp));
   }
 
   fetchJobStderr(jobId) {
-    return this.http.getRaw(`/api/v1/jobs/${jobId}/stderr`);
+    return this.http.getRaw(`${API_PREFIX}v1/jobs/${jobId}/stderr`);
   }
 
   fetchJobStdout(jobId) {
-    return this.http.getRaw(`/api/v1/jobs/${jobId}/stdout`);
+    return this.http.getRaw(`${API_PREFIX}v1/jobs/${jobId}/stdout`);
   }
 
   onJobStderrUpdate(jobId) {
-    const url = "ws://" + window.location.host + `/api/v1/jobs/${jobId}/stderr/updates`;
+    const url = "ws://" + window.location.host + `${API_PREFIX}v1/jobs/${jobId}/stderr/updates`;
     return this.createObservableSocket(url).map(e => e.data);
   }
 
   onJobStdoutUpdate(jobId) {
-    const url = "ws://" + window.location.host + `/api/v1/jobs/${jobId}/stdout/updates`;
+    const url = "ws://" + window.location.host + `${API_PREFIX}v1/jobs/${jobId}/stdout/updates`;
     return this.createObservableSocket(url).map(e => e.data);
   }
 
   postEmptyRequestToHref(href) {
-    return this.http.post(`/api/${href}`);
+    return this.http.post(`${API_PREFIX}${href}`);
   }
 
   fetchJobOutputs(jobId) {
-  	return this.http.get(`/api/v1/jobs/${jobId}/outputs`).then(resp => JSON.parse(resp));
+  	return this.http.get(`${API_PREFIX}v1/jobs/${jobId}/outputs`).then(resp => JSON.parse(resp));
 	}
 }
