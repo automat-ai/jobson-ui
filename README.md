@@ -36,7 +36,7 @@ npm run start
 ```
 
 This runs a local development server, which assumes a Jobson server
-is running on `localhost:8082` (see `webpack.config.js`). The development
+is running on `localhost:8080` (see `webpack.config.js`). The development
 server automatically recompiles assets as you edit them.
 
 **Note:** This isn't appropriate for long-term deployments, but will
@@ -62,7 +62,7 @@ http {
 
         location / {
             # From this project
-            root /var/www/built-assets'
+            root /var/www/built-assets;
         }
 
         location /api {
