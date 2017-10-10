@@ -87,4 +87,8 @@ export class JobsonAPI {
   postEmptyRequestToHref(href) {
     return this.http.post(`/api/${href}`);
   }
+
+  fetchJobOutputs(jobId) {
+  	return this.http.get(`/api/v1/jobs/${jobId}/outputs`).then(resp => JSON.parse(resp));
+	}
 }

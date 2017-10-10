@@ -26,7 +26,9 @@ export class JobDetailsComponent extends React.Component {
 		super();
 		this.state = {
 			jobLoaded: false,
-			job: null
+			job: null,
+			outputsLoaded: false,
+			outputs: null,
 		};
 	}
 
@@ -35,7 +37,11 @@ export class JobDetailsComponent extends React.Component {
 			.fetchJobDetailsById(this.props.params.id)
 			.then(job => {
 				this.setState({jobLoaded: true, job: job});
-			});
+			})
+			.then(() => this.props.api.fetchJobOutputs(this.props.params.id))
+			.then(outputs => {
+				this.setState({outputsLoaded: true, outputs: outputs});
+			})
 	}
 
 	componentWillMount() {
@@ -49,13 +55,27 @@ export class JobDetailsComponent extends React.Component {
 	renderStatusChange(statusChange, i) {
 		return (
 			<li key={i}>
-				{statusChange.time} - {statusChange.status}
+				{statusChange.time} - {statusChange.status} - {statusChange.message}
 			</li>
 		);
 	}
 
 	getLatestStatus() {
-		return this.state.job.statusChanges[this.state.job.statusChanges.length - 1].status;
+		return this.state.job.timestamps[this.state.job.timestamps.length - 1].status;
+	}
+
+	renderJobOutput(jobOutput, key) {
+		return (
+			<li>
+				<a href={"/api" + jobOutput.href} key={key}>{key}</a>
+			</li>
+		);
+	}
+
+	renderOutputs() {
+		return Object
+			.keys(this.state.outputs)
+			.map(k => this.renderJobOutput(this.state.outputs[k], k));
 	}
 
 	render() {
@@ -87,7 +107,12 @@ export class JobDetailsComponent extends React.Component {
 					</div>
 
 					<ul>
-						{this.state.job.statusChanges.map(this.renderStatusChange)}
+						{this.state.job.timestamps.map(this.renderStatusChange)}
+					</ul>
+
+					<h2>Outputs</h2>
+					<ul>
+						{this.state.outputsLoaded ? this.renderOutputs() : null }
 					</ul>
 
 					<h2>Stdout</h2>

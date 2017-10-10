@@ -29,7 +29,7 @@ export class SubmissionBuilderComponent extends React.Component {
 	static expectedInputUiComponentCtors = {
 		string: TextUiInput,
 		select: SelectUiInput,
-		"array<string>": MultiValueUiInput,
+		"string[]": MultiValueUiInput,
 		sql: SqlUiInput
 	};
 

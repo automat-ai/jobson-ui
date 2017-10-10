@@ -99,7 +99,7 @@ export class JobListComponent extends React.Component {
 						{jobSummary.id}
 					</Link>
 				</td>
-				<td>{jobSummary.owner.id}</td>
+				<td>{jobSummary.owner}</td>
 				<td>{jobSummary.description}</td>
 				<td>{jobSummary.status}</td>
 				<td>

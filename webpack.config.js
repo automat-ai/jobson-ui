@@ -7,7 +7,7 @@ var DashboardPlugin = require('webpack-dashboard/plugin');
 var ExtractTextPlugin = require('extract-text-webpack-plugin');
 
 const HOST = process.env.HOST || "0.0.0.0";
-const PORT = process.env.PORT || "8888";
+const PORT = process.env.PORT || "8090";
 
 loaders.push({
   test: /\.scss$/,
@@ -46,7 +46,7 @@ module.exports = {
     host: HOST,
 		proxy: {
     	"/api": {
-    		target: "http://localhost:8082",
+    		target: "http://localhost:8080",
 				pathRewrite: { "^/api": "" },
 				secure: false,
 				ws: true

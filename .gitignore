@@ -35,5 +35,12 @@ public
 # Ignore yarn files
 yarn.lock
 
+# IDEA
+*.iml
+.idea
+
+# other SCS
+.svn
+
 # Emacs
 *~
