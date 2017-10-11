@@ -8,16 +8,14 @@ so by providing an abstraction layer over process forking, HTTP API
 generation, standard IO, and websockets.
 
 This project is a web-frontend that uses all major features of the
-Jobson API. Combined with Jobson, you get a web stack (UI, auth,
-API, execution, and persistence) for the price of writing a job spec.
-
-This project was made with [react-webpack-babel](https://github.com/alicoding/react-webpack-babel)
-and associated libraries.
+Jobson API. Combined with Jobson, you get a web stack (UI, auth, API,
+execution, and persistence) for the price of writing a job spec and
+deploying a standard web stack.
 
 
 # Build
 
-Built using `node v6.11.4` and `npm 3.10.10`:
+Jobson-UI is built using `node v6.11.4` and `npm 3.10.10`:
 
 ```bash
 npm install
@@ -31,45 +29,51 @@ Which compiles all outputs to `public/`.
 
 ## As a developer/small team
 
-```
+```bash
 npm run start
 ```
 
-This runs a local development server, which assumes a Jobson server
-is running on `localhost:8080` (see `webpack.config.js`). The development
-server automatically recompiles assets as you edit them.
+This runs a local development webserver + reverse proxy. The reverse
+proxy assumes a Jobson server is running on `localhost:8080` (may be
+changed in `webpack.config.js`). The development server automatically
+recompiles assets as you edit them.
 
-**Note:** This isn't appropriate for long-term deployments, but will
+**Note:** This isn't appropriate for a production deployment, but will
 get you going quickly.
 
 
-## As a host:
+## In Production:
 
-- Build the project
-- Host the built assets using a standard webserver (e.g. Apache/Nginx)
-- When loaded in a browser, the UI will send API requests to the
-  same server it is hosted on. For example, if `index.html` is hosted
-  at `http://some-domain.com/index.html` then the frontend will make requests
-  to `http://some-domain.com/api/v1/jobs`.
-- Your chosen webserver must be configured to [reverse proxy](https://www.nginx.com/resources/admin-guide/reverse-proxy/)
-  any requests beginning with `/api/` to a Jobson server. For example, in
-  nginx:
+- When loaded in a browser, clients (i.e. browsers) will send API
+  requests to the same server as the UI assets are served from. For
+  example, if `index.html` is hosted at `https://domain/index.html`
+  then clients will make API calls to `https://domain/api/v1/jobs`. If
+  `/api/` is already being used by something else on the same server,
+  then build the project with a custom `API_PREFIX`:
+  
+```bash
+npm run build -- --env.API_PREFIX=/customprefix/
+```
 
+- Configure your webserver (e.g. Apache or nginx) to
+  [reverse proxy](https://www.nginx.com/resources/admin-guide/reverse-proxy/)
+  any requests beginning with `/api/` (or `API_PREFIX`) to a Jobson
+  server. For example, in nginx:
+  
 ```
 http {
     server {
-        server_name www.some-domain.com;
+        server_name domain;
 
         location / {
-            # From this project
-            root /var/www/built-assets;
+            root /var/www/jobson-ui;
         }
 
         location /api {
-            # Forward API commands
+            # A Jobson server running locally on port 8080
             proxy_pass localhost:8080;
 
-            # The Jobson server doesn't use the /api/ prefix.
+            # The Jobson server doesn't use a prefix
             rewrite ^/api/(.*) /$1 break;
 
             # Websockets
@@ -81,3 +85,12 @@ http {
     }
 }
 ```
+
+- Once your webserver is configured, copy the build assets to the
+  appropriate folder (e.g. `/var/www/jobson-ui` above)
+  
+- **DANGER:** The Jobson API can handle client credentials. You must
+  configure your webserver to use encryption (SSL/TLS) or you are
+  heavily risking risk man-in-the-middle attacks.
+
+
