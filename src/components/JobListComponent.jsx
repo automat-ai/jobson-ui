@@ -23,46 +23,50 @@ import {Helpers} from "../Helpers";
 
 export class JobListComponent extends React.Component {
 
-	constructor() {
-		super();
+	constructor(props) {
+		super(props);
+
+		const params = Helpers.extractParams(props.routeProps.location.search);
+		params.page = params.page || 0;
+		params.query = params.query || "";
 
 		this.state = {
 			loading: true,
+			currentQuery: params.query,
+			queryInInputBar: params.query,
+			pageNum: params.page,
 			jobSummaries: [],
-			query: "",
-			page: 0,
 		};
 	}
 
 	componentWillMount() {
-		const pageParams = Helpers.extractWindowURIParams();
-		const query = pageParams.query || "";
-		const page = parseInt(pageParams.page) || 0;
+		this.updateSubscription = this.props.api
+			.onAllJobStatusChanges()
+			.subscribe(() => this.updateJobList());
 
-		const setup = () => {
-			this.updateSubscription = this.props.api
-				.onAllJobStatusChanges()
-				.subscribe(update => {
-					this.updateJobList();
-				});
+		this.updateJobList();
+	}
 
-			this.updateJobList();
-		};
+	componentWillReceiveProps(newProps) {
+		const params = Helpers.extractParams(newProps.routeProps.location.search);
+		params.page = params.page || 0;
+		params.query = params.query || "";
 
-		this.setState({page: page, query: query}, setup);
+		if (params.page != this.state.pageNum ||
+		    params.query != this.state.currentQuery) {
+
+			this.setState({
+				pageNum: params.page,
+				currentQuery: params.query,
+				queryInInputBar: params.query
+			}, () => this.updateJobList());
+		}
 	}
 
 	updateJobList() {
-		const newQuery = `?page=${this.state.page}&query=${encodeURIComponent(this.state.query)}`;
-		const newLocation = window.location.href.split("?")[0] + newQuery;
-
-		if (newQuery !== window.location.search) {
-			window.history.pushState({}, null, newLocation);
-		}
-
 		this.setState({loading: true}, () => {
 			this.props.api
-				.fetchJobSummaries(this.state.query, this.state.page)
+				.fetchJobSummaries(this.state.currentQuery, this.state.pageNum)
 				.then(page => {
 					this.setState({loading: false, jobSummaries: page.entries});
 				});
@@ -70,7 +74,6 @@ export class JobListComponent extends React.Component {
 	}
 
 	generateJobActions(jobSummary) {
-		const actionNames = ["abort"];
 		const self = this;
 
 		return Object.keys(jobSummary._links)
@@ -91,6 +94,10 @@ export class JobListComponent extends React.Component {
 			.filter(el => el !== null);
 	}
 
+	getLatestStatus(timestamps) {
+		return timestamps[timestamps.length - 1].status;
+	}
+
 	renderJobSummary(jobSummary, i) {
 		return (
 			<tr key={i}>
@@ -100,8 +107,8 @@ export class JobListComponent extends React.Component {
 					</Link>
 				</td>
 				<td>{jobSummary.owner}</td>
-				<td>{jobSummary.description}</td>
-				<td>{jobSummary.status}</td>
+				<td>{jobSummary.name}</td>
+				<td>{this.getLatestStatus(jobSummary.timestamps)}</td>
 				<td>
 					{this.generateJobActions.bind(this)(jobSummary)}
 				</td>
@@ -110,26 +117,21 @@ export class JobListComponent extends React.Component {
 	}
 
 	onSearchChange(e) {
-		this.setState({query: e.target.value});
+		this.setState({ queryInInputBar: e.target.value });
 	}
 
 	onSearchKeyUp(e) {
 		if (e.key === "Enter") {
-			this.setState({ page: 0 }, () => this.updateJobList());
+			this.props.routeProps.history.push(`jobs?page=${this.state.pageNum}&query=${this.state.queryInInputBar}`);
 		}
 	}
 
 	onClickedNextPage() {
-		this.setState((oldState) =>{
-			return { page: oldState.page + 1};
-		}, () => this.updateJobList());
+		this.props.routeProps.history.push(`jobs?page=${this.state.pageNum + 1}&query=${this.state.currentQuery}`);
 	}
 
 	onClickedPreviousPage() {
-		this.setState(oldState => {
-			if (oldState.page > 0)
-				return {page: oldState.page - 1};
-		}, () => this.updateJobList());
+		this.props.routeProps.history.push(`jobs?page=${this.state.pageNum - 1}&query=${this.state.currentQuery}`);
 	}
 
 	renderJobSummaries() {
@@ -143,7 +145,7 @@ export class JobListComponent extends React.Component {
 						<tr>
 							<th>ID</th>
 							<th>Owner</th>
-							<th>Description</th>
+							<th>Name</th>
 							<th>Status</th>
 							<th>Actions</th>
 						</tr>
@@ -155,8 +157,8 @@ export class JobListComponent extends React.Component {
 					</table>
 
 					<button className="btn-default"
-									disabled={this.state.page == 0}
-					        onClick={this.onClickedPreviousPage.bind(this)}>
+									disabled={this.state.pageNum === 0}
+									onClick={this.onClickedPreviousPage.bind(this)}>
 						Newer Jobs
 					</button>
 					<button className="btn-default"
@@ -172,15 +174,13 @@ export class JobListComponent extends React.Component {
 
 	render() {
 		return (
-			<div id="jobs-list" ref={(el) => {
-				this.el = el
-			} }>
+			<div id="jobs-list">
 				<input type="text"
 							 id="jobs-search"
 							 placeholder="Search jobs..."
 							 onChange={this.onSearchChange.bind(this)}
 							 onKeyUp={this.onSearchKeyUp.bind(this)}
-							 value={this.state.query}
+							 value={this.state.queryInInputBar}
 							 autoFocus />
 
 				{this.renderJobSummaries()}
@@ -191,6 +191,7 @@ export class JobListComponent extends React.Component {
 	}
 
 	componentWillUnmount() {
-		this.updateSubscription.unsubscribe();
+		if (this.updateSubscription)
+			this.updateSubscription.unsubscribe();
 	}
 }

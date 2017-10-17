@@ -43,8 +43,10 @@ export class Helpers {
 		}
 	}
 
-	static extractWindowURIParams() {
-		var pairs = window.location.search.substring(1).split("&"),
+	static extractParams(search) {
+		if (!search) return {};
+
+		var pairs = search.substring(1).split("&"),
 			obj = {},
 			pair,
 			i;
@@ -148,6 +150,19 @@ export class Helpers {
 	static reject(a, el) {
 		const i = a.indexOf(el);
 		return a.filter((e, j) => j !== i);
+	}
+
+	static makeWebsocketPath(p) {
+		const scheme = window.location.protocol.startsWith("https") ? "wss" : "ws";
+		const prefix = `${scheme}://${window.location.host}`;
+
+		if (p.startsWith("/")) {
+			return prefix + p;
+		} else if (window.location.pathname.endsWith("/")) {
+			return prefix + window.location.pathname + p;
+		} else {
+			return prefix + window.location.pathname + "/" + p;
+		}
 	}
 }
 

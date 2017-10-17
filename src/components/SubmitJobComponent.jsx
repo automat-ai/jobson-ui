@@ -69,7 +69,8 @@ export class SubmitJobComponent extends React.Component {
 
 				<SubmissionBuilderComponent
 					specId={selectedSpec.id}
-					api={this.props.api}/>
+					api={this.props.api}
+					routeProps={this.props.routeProps} />
 			</div>
 		);
 	}

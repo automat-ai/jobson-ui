@@ -52,12 +52,12 @@ get you going quickly.
   then build the project with a custom `API_PREFIX`:
   
 ```bash
-npm run build -- --env.API_PREFIX=/customprefix/
+npm run build -- --env.API_PREFIX="/customprefix"
 ```
 
 - Configure your webserver (e.g. Apache or nginx) to
   [reverse proxy](https://www.nginx.com/resources/admin-guide/reverse-proxy/)
-  any requests beginning with `/api/` (or `API_PREFIX`) to a Jobson
+  any requests beginning with `/api` (or `API_PREFIX`) to a Jobson
   server. For example, in nginx:
   
 ```

@@ -23,9 +23,8 @@ import {HttpService} from "../HttpService";
 import {JobsonAPI} from "../JobsonAPI";
 import {JobListComponent} from "./JobListComponent";
 import {SubmitJobComponent} from "./SubmitJobComponent";
-import {SignInComponent} from "./SignInComponent";
 import {JobDetailsComponent} from "./JobDetailsComponent";
-import {Switch, Route, Link} from "react-router-dom";
+import {Switch, Route, Link, Redirect} from "react-router-dom";
 import {AboutComponent} from "./AboutComponent";
 
 export default class AppComponent extends React.Component {
@@ -40,6 +39,7 @@ export default class AppComponent extends React.Component {
 			httpService: httpService,
 			api: api,
 			requests: [],
+			username: "Loading...",
 		};
 	}
 
@@ -48,9 +48,9 @@ export default class AppComponent extends React.Component {
 			this.setState({ requests: requests });
 		});
 
-		if (document.cookie.indexOf("session=") >= 0) {
-			this.setState({loggedIn: true});
-		}
+		this.state.api.fetchCurrentUser().then(userId => {
+			this.setState({ username: userId });
+		})
 	}
 
 	render() {
@@ -67,29 +67,31 @@ export default class AppComponent extends React.Component {
 
 							<nav>
 								<Link to="/jobs">Jobs</Link>
-								<Link to="/jobs/submit">Submit Job</Link>
+								<Link to="/submit">Submit Job</Link>
 							</nav>
 
 							<div className="navbar-right">
 						<span id="navbar-username">
-							akewley
+							{this.state.username}
 						</span>
 							</div>
 						</div>
 
 						<main>
 							<Switch>
-								<Route exact path="/" render={props => <JobListComponent api={this.state.api}/>}/>
-								<Route exact path="/jobs" render={props => <JobListComponent api={this.state.api}/>}/>
-								<Route exact path="/jobs/submit" render={props => <SubmitJobComponent api={this.state.api}/>}/>
-								<Route exact path="/about" render={props => <AboutComponent />}/>
+								<Route path="/submit"
+											 render={props => <SubmitJobComponent api={this.state.api} routeProps={props} />}/>
 								<Route path="/jobs/:id"
 											 render={props => <JobDetailsComponent params={props.match.params} api={this.state.api}/>}/>
+								<Route path="/jobs"
+											 render={props => <JobListComponent api={this.state.api} routeProps={props} />}/>
+								<Route path="/about" component={AboutComponent} />
+								<Redirect from={"/"} to={"/jobs"} />
 							</Switch>
 						</main>
 
 						<footer>
-							<Link to="/about">about</Link>
+							<Link to={"/about"}>about</Link>
 						</footer>
 					</div>
 				</div>

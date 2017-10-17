@@ -21,13 +21,13 @@ import React from 'react';
 import { render } from 'react-dom';
 import { AppContainer } from 'react-hot-loader';
 import AppComponent from './components/AppComponent';
-import { BrowserRouter } from "react-router-dom";
+import { HashRouter } from "react-router-dom";
 
 render(
   <AppContainer>
-    <BrowserRouter>
+    <HashRouter>
       <AppComponent/>
-    </BrowserRouter>
+    </HashRouter>
   </AppContainer>, document.querySelector("#app"));
 
 if (module && module.hot) {

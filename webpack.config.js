@@ -17,7 +17,7 @@ loaders.push({
 
 module.exports = (env = {}) => {
 
-	const API_PREFIX = env.API_PREFIX || "/api/";
+	const API_PREFIX = env.API_PREFIX || "/api";
 
 	return {
 

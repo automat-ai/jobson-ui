@@ -86,7 +86,7 @@ export class SubmissionBuilderComponent extends React.Component {
 		this.props.api
 			.submitJobRequest(jobRequest)
 			.then(resp => {
-				window.location.pathname = `/jobs/${resp.id}`;
+				this.props.routeProps.history.push(`/jobs/${resp.id}`);
 			})
 			.catch(err => {
 				this.setState({ errorMessage: err.message });

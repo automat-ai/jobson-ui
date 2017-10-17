@@ -19,6 +19,7 @@
 
 import React from "react";
 import {StdioComponent} from "./StdioComponent";
+import {Link} from "react-router-dom";
 
 export class JobDetailsComponent extends React.Component {
 
@@ -66,8 +67,8 @@ export class JobDetailsComponent extends React.Component {
 
 	renderJobOutput(jobOutput, key) {
 		return (
-			<li>
-				<a href={"/api" + jobOutput.href} key={key}>{key}</a>
+			<li key={key}>
+				<a href={API_PREFIX + jobOutput.href}>{key}</a>
 			</li>
 		);
 	}
@@ -82,7 +83,7 @@ export class JobDetailsComponent extends React.Component {
 		return this.state.jobLoaded ?
 			(
 				<div id="job-details">
-					<h1><a href="/jobs">jobs</a> / {this.state.job.id}</h1>
+					<h1><Link to="/jobs">jobs</Link> / {this.state.job.id}</h1>
 					<div>
 						<span className="prop-name">
 							Created by
