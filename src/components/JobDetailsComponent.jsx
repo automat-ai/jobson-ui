@@ -89,7 +89,7 @@ export class JobDetailsComponent extends React.Component {
 							Created by
 						</span>
 						<span className="prop-value">
-							{this.state.job.owner.id}
+							{this.state.job.owner}
 						</span>
 
 						<span className="prop-name">

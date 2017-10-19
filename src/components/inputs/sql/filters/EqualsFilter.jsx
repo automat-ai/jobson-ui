@@ -26,7 +26,11 @@ export class EqualsFilter extends React.Component {
 	}
 
 	onInputChanged(e) {
-		this.props.onFilterChanged(`${this.props.column.id} = ${e.target.value}`);
+		if (this.props.column.type === "string" || this.props.column.type.startsWith("enum")) {
+			this.props.onFilterChanged(`${this.props.column.id} = '${e.target.value}'`);
+		} else {
+			this.props.onFilterChanged(`${this.props.column.id} = ${e.target.value}`);
+		}
 	}
 
 	render() {

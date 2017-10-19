@@ -27,9 +27,9 @@ export class InFilter extends React.Component {
 	}
 
 	onValueChanged(vals) {
-		const escapedVals = this.props.column.type === "string" ?
-			vals.values.map(v => `"${v}"`) :
-			vals.values;
+		const escapedVals = (this.props.column.type === "string" || this.props.column.type.startsWith("enum")) ?
+			vals.map(v => `"${v}"`) :
+			vals;
 
 		const inFilter = `${this.props.column.id} IN (${escapedVals.join(", ")})`;
 
@@ -37,7 +37,7 @@ export class InFilter extends React.Component {
 	}
 
 	render() {
-		const mockExpectedInput = { type: "multivalue" };
+		const mockExpectedInput = {};
 		return <MultiValueUiInput expectedInput={mockExpectedInput}
 															onValueChanged={this.onValueChanged.bind(this)} />;
 	}
