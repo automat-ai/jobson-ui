@@ -24,51 +24,38 @@ export class SelectUiInput extends React.Component {
 	constructor(props) {
 		super(props);
 
-		const selectedItem = this.chooseDefaultSelection(props);
-
 		this.state = {
-			selected: selectedItem,
+			selected: this.chooseDefaultSelection(props),
 		};
 	}
 
 	chooseDefaultSelection(props) {
 		return props.expectedInput.default ?
-			props.expectedInput.default :
-			this.optionToSelection(props.expectedInput.options[0]);
-	}
-
-	optionToSelection(option) {
-		return option.id;
+			props.expectedInput.default : props.expectedInput.options[0].id;
 	}
 
 	componentWillMount() {
 		this.props.onValueChanged(this.state.selected);
 	}
 
-	componentWillReceiveProps(newProps) {
-		const selectedItem = this.chooseDefaultSelection(newProps);
-		this.setState(
-			{selected: selectedItem},
-			() => this.props.onValueChanged(this.state.selected));
-	}
-
 	onUiSelectionChange(e) {
-		const selectedOption = this.props.expectedInput.options[e.target.value];
-		const selection = this.optionToSelection(selectedOption);
-
-		this.setState(
-			{selected: selection},
-			() => this.props.onValueChanged(this.state.selected));
+		this.setState({selected: e.target.value}, () => {
+			this.props.onValueChanged(this.state.selected);
+		});
 	}
 
 	renderOption(option, i) {
-		return <option key={i} value={i}>{option.name}</option>;
+		return (
+			<option key={i} value={option.id}>
+				{option.name}
+			</option>
+		);
 	}
 
 	render() {
 		return (
 			<div>
-				<select onChange={this.onUiSelectionChange.bind(this)}>
+				<select onChange={this.onUiSelectionChange.bind(this)} value={this.state.selected}>
 					{this.props.expectedInput.options.map(this.renderOption.bind(this))}
 				</select>
 				<div className="selection-description">

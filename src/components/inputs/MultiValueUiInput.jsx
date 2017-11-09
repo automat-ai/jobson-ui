@@ -22,11 +22,11 @@ import {Helpers} from "../../Helpers";
 
 export class MultiValueUiInput extends React.Component {
 
-  constructor() {
-    super();
+  constructor(props) {
+    super(props);
 
     this.state = {
-      values: []
+      values: props.expectedInput.default || [],
     };
   }
 
@@ -39,9 +39,9 @@ export class MultiValueUiInput extends React.Component {
 	}
 
   onChange(e) {
-    this.setState({
-    	values: e.target.value.split("\n")
-    }, () => this.props.onValueChanged(this.asApiInput()));
+    this.setState({ values: e.target.value.split("\n") }, () => {
+			this.props.onValueChanged(this.asApiInput());
+		});
   }
 
   onClickedFromFile() {
@@ -52,22 +52,21 @@ export class MultiValueUiInput extends React.Component {
 				.map(entry => entry.trim())
 				.filter(entry => entry.length > 0))
 			.then(values => {
-				this.setState(
-					{values},
-					() => this.props.onValueChanged(this.asApiInput()));
+				this.setState({values}, () => {
+					this.props.onValueChanged(this.asApiInput());
+				});
 			});
 	}
 
 	onClickedClear() {
-  	this.setState(
-  		{ values: [] },
-			() => this.props.onValueChanged(this.asApiInput()));
+  	this.setState({ values: [] }, () => {
+  		this.props.onValueChanged(this.asApiInput());
+		});
 	}
 
 	onClickedDownload() {
-  	const data = new Blob(
-  		[this.state.values.join("\n")],
-			{type: "text/plain"});
+  	const payload = [this.state.values.join("\n")];
+  	const data = new Blob(payload, {type: "text/plain"});
 
   	Helpers.promptUserToDownload(data, "values.txt");
 	}
@@ -99,7 +98,7 @@ export class MultiValueUiInput extends React.Component {
 		return this.state.values.length > 10 ?
 			<span>{this.state.values.length} values</span> : // Prevents DOM locking from rendering too many vals.
 			<textarea value={this.state.values.join("\n")}
-								onChange={(e) => this.onChange(e)}
+								onChange={this.onChange.bind(this)}
 			          placeholder="Entries separated by newlines" />;
 	}
 

@@ -24,27 +24,29 @@ export class TextUiInput extends React.Component {
 	constructor(props) {
 		super(props);
 
-		const value = props.expectedInput.default ? props.expectedInput.default : "";
+		this.state = {
+			value: this.chooseDefaultSelection(props),
+		};
+	}
 
-		this.state = { value: value };
+	chooseDefaultSelection(props) {
+		return props.expectedInput.default ? props.expectedInput.default : "";
 	}
 
 	componentWillMount() {
-		this.props.onValueChanged(this.asApiInput());
-	}
-
-	asApiInput() {
-		return this.state.value;
+		this.props.onValueChanged(this.state.value);
 	}
 
 	componentWillReceiveProps(newProps) {
-		const value = newProps.expectedInput.default ? newProps.expectedInput.default : "";
-
-		this.setState({value: value}, () => this.props.onValueChanged(this.asApiInput()));
+		this.setState({value: this.chooseDefaultSelection(newProps)}, () => {
+			this.props.onValueChanged(this.state.value);
+		});
 	}
 
 	onChange(e) {
-		this.setState({value: e.target.value}, () => this.props.onValueChanged(this.asApiInput()));
+		this.setState({value: e.target.value}, () => {
+			this.props.onValueChanged(this.asApiInput());
+		});
 	}
 
 	render() {

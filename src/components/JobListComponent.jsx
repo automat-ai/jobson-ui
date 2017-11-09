@@ -27,7 +27,7 @@ export class JobListComponent extends React.Component {
 		super(props);
 
 		const params = Helpers.extractParams(props.routeProps.location.search);
-		params.page = params.page || 0;
+		params.page = parseInt(params.page || 0);
 		params.query = params.query || "";
 
 		this.state = {
@@ -49,7 +49,7 @@ export class JobListComponent extends React.Component {
 
 	componentWillReceiveProps(newProps) {
 		const params = Helpers.extractParams(newProps.routeProps.location.search);
-		params.page = params.page || 0;
+		params.page = parseInt(params.page || 0);
 		params.query = params.query || "";
 
 		if (params.page != this.state.pageNum ||
@@ -122,22 +122,59 @@ export class JobListComponent extends React.Component {
 
 	onSearchKeyUp(e) {
 		if (e.key === "Enter") {
-			this.props.routeProps.history.push(`jobs?page=${this.state.pageNum}&query=${this.state.queryInInputBar}`);
+			if (this.state.queryInInputBar !== this.state.currentQuery) {
+				this.pushHistory(this.state.pageNum, this.state.queryInInputBar);
+			}
 		}
 	}
 
+	pushHistory(page, query) {
+		this.props.routeProps.history.push(
+			this.constructPath(page,query));
+	}
+
+	constructPath(page, query) {
+		const start = "jobs";
+		const rest = [];
+
+		if (page > 0) rest.push(`page=${page}`);
+		if (query.length > 0) rest.push(`query=${query}`);
+
+		return rest.length === 0 ? start : start + "?" + rest.join("&");
+	}
+
 	onClickedNextPage() {
-		this.props.routeProps.history.push(`jobs?page=${this.state.pageNum + 1}&query=${this.state.currentQuery}`);
+		this.pushHistory(this.state.pageNum + 1, this.state.currentQuery);
 	}
 
 	onClickedPreviousPage() {
-		this.props.routeProps.history.push(`jobs?page=${this.state.pageNum - 1}&query=${this.state.currentQuery}`);
+		this.pushHistory(this.state.pageNum - 1, this.state.currentQuery);
+	}
+
+	userHasNoJobs() {
+		return this.state.jobSummaries.length === 0 &&
+			this.state.currentQuery.length === 0 &&
+			this.state.pageNum === 0;
 	}
 
 	renderJobSummaries() {
 		const renderJobSummary = this.renderJobSummary.bind(this);
 
-		if (this.state.jobSummaries.length > 0) {
+		if (this.userHasNoJobs()) {
+			return (
+				<div className="missing-banner">
+					You don't appear to have any jobs, <Link to="/submit">
+					Submit your first job
+				</Link>
+				</div>
+			);
+		} else if (this.state.jobSummaries.length === 0) {
+			return (
+				<div className="missing-banner">
+					No jobs found
+				</div>
+			);
+		} else {
 			return (
 				<div>
 					<table>
@@ -166,9 +203,7 @@ export class JobListComponent extends React.Component {
 						Older Jobs
 					</button>
 				</div>
-			)
-		} else {
-			return <div className="missing-banner">No jobs found</div>;
+			);
 		}
 	}
 
@@ -181,7 +216,8 @@ export class JobListComponent extends React.Component {
 							 onChange={this.onSearchChange.bind(this)}
 							 onKeyUp={this.onSearchKeyUp.bind(this)}
 							 value={this.state.queryInInputBar}
-							 autoFocus />
+							 autoFocus
+				       disabled={this.userHasNoJobs()} />
 
 				{this.renderJobSummaries()}
 
