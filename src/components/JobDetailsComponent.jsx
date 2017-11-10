@@ -18,33 +18,56 @@
  */
 
 import React from "react";
-import {StdioComponent} from "./StdioComponent";
+
 import {Link} from "react-router-dom";
 import Timestamp from "react-timestamp";
+import {Helpers} from "../Helpers";
+import {JobOutputsComponent} from "./JobOutputsComponent";
+import {JobEventsComponent} from "./JobEventsComponent";
+import {JobInputsComponent} from "./JobInputsComponent";
 
 export class JobDetailsComponent extends React.Component {
 
 	constructor() {
 		super();
+
+		this.tabs = {
+			"Inputs": () => {
+				return <JobInputsComponent jobId={this.props.params.id}
+																	 api={this.props.api} />;
+			},
+			"Outputs": () => {
+				return (
+					<JobOutputsComponent jobId={this.props.params.id}
+															 api={this.props.api} />
+				);
+			},
+			"Events": () => {
+				return <JobEventsComponent timestamps={this.state.job.timestamps}/>;
+			},
+		};
+
+		this.detailHeaders = {
+			"Job Name": () => this.state.job.name,
+			"Created by": () => this.state.job.owner,
+			"Submitted": () => {
+				return <Timestamp time={this.state.job.timestamps[0].time} format='ago' />;
+			},
+			"Latest Status": () => {
+				return (
+					<div>
+						{Helpers.renderStatusField(this.getLatestStatus().status)}
+						(<Timestamp time={this.getLatestStatus().time} format='ago' />)
+					</div>
+				);
+			},
+		};
+
 		this.state = {
 			jobLoaded: false,
-			showMoreDetails: false,
 			job: null,
-			outputsLoaded: false,
-			outputs: null,
+			activeTab: "Outputs",
 		};
-	}
-
-	updateUi() {
-		this.props.api
-			.fetchJobDetailsById(this.props.params.id)
-			.then(job => {
-				this.setState({jobLoaded: true, job: job});
-			})
-			.then(() => this.props.api.fetchJobOutputs(this.props.params.id))
-			.then(outputs => {
-				this.setState({outputsLoaded: true, outputs: outputs});
-			})
 	}
 
 	componentWillMount() {
@@ -55,64 +78,39 @@ export class JobDetailsComponent extends React.Component {
 			.subscribe(() => this.updateUi());
 	}
 
-	renderStatusChange(statusChange, i) {
-		return (
-			<div className="item" key={i}>
-				<div className="content">
-					<div className="header">
-						{statusChange.message}
-					</div>
-					<div className="description">
-						Status changed to {statusChange.status}&nbsp;
-						<Timestamp time={statusChange.time} format='ago' />
-					</div>
-				</div>
-			</div>
-		);
+	updateUi() {
+		this.props.api
+			.fetchJobDetailsById(this.props.params.id)
+			.then(job => {
+				this.setState({jobLoaded: true, job: job});
+			});
 	}
+
+	componentWillUnmount() {
+		this.updateSubscription.unsubscribe();
+	}
+
 
 	getLatestStatus() {
 		return this.state.job.timestamps[this.state.job.timestamps.length - 1];
 	}
 
-	renderJobOutput(jobOutput, key) {
-		return (
-		<div className="item" key={key}>
-			<div className="content">
-				<div className="header">
-					{key}
-				</div>
-				<div className="description">
-					<a className="ui primary button"
-						 href={API_PREFIX + jobOutput.href}>
-						<i className="download icon"></i>
-						Download
-					</a>
-				</div>
-			</div>
-		</div>
-		);
+	renderTabHeaders() {
+		return Object.keys(this.tabs).map(header => {
+			if (header === this.state.activeTab) {
+				return <a className="item active">
+					{header}
+				</a>;
+			} else {
+				return <a className="item" onClick={this.setActiveTab.bind(this, header)}>
+					{header}
+				</a>;
+			}
+		});
 	}
 
-	renderOutputs() {
-		return Object
-			.keys(this.state.outputs)
-			.map(k => this.renderJobOutput(this.state.outputs[k], k));
-	}
-
-	renderEvents() {
-		return (
-			<div>
-				<h4>Events</h4>
-				<div className="ui relaxed divided list">
-					{this.state.job.timestamps.map(this.renderStatusChange)}
-				</div>
-			</div>
-		);
-	}
-
-	toggleDetails() {
-		this.setState({showMoreDetails: !this.state.showMoreDetails});
+	setActiveTab(activeTab) {
+		this.setState({activeTab});
 	}
 
 	render() {
@@ -133,73 +131,21 @@ export class JobDetailsComponent extends React.Component {
 
 						<div className="ui horizontal list">
 
-							<div className="item">
-								<div className="content">
-									<div className="header">
-										Job Name
-									</div>
-									{this.state.job.name}
-								</div>
-							</div>
-
-							<div className="item">
-								<div className="content">
-									<div className="header">
-										Created by
-									</div>
-									{this.state.job.owner}
-								</div>
-							</div>
-
-							<div className="item">
-								<div className="content">
-									<div className="header">
-										Latest Status Change
-									</div>
-									{this.getLatestStatus().status} (<Timestamp time={this.getLatestStatus().time} format='ago' />), <a onClick={this.toggleDetails.bind(this)}>
-										{this.state.showMoreDetails ? "hide" : "show" } events
-									</a>
-								</div>
-							</div>
+							{Object.keys(this.detailHeaders).map(k => this.renderDetailHeader(k, this.detailHeaders[k]))}
 
 						</div>
 					</div>
 
-					{this.state.showMoreDetails ? this.renderEvents() : null}
-
-					<h2 className="ui dividing header">
-						Outputs
-					</h2>
-
-					<div className="ui relaxed divided list">
-						{this.state.outputsLoaded ? this.renderOutputs() : null }
-
-						<div className="item">
-							<div className="content">
-								<div className="header">
-									stdout
-								</div>
-								<div className="description">
-									<StdioComponent
-										fetchStdio={() => this.props.api.fetchJobStdout(this.state.job.id)}
-										onStdioUpdate={() => this.props.api.onJobStdoutUpdate(this.state.job.id)}/>
-								</div>
-							</div>
-						</div>
-
-						<div className="item">
-							<div className="content">
-								<div className="header">
-									stderr
-								</div>
-								<div className="description">
-									<StdioComponent
-										fetchStdio={() => this.props.api.fetchJobStderr(this.state.job.id)}
-										onStdioUpdate={() => this.props.api.onJobStderrUpdate(this.state.job.id)}/>
-								</div>
-							</div>
-						</div>
+					<div className="ui top tabular menu">
+						{this.renderTabHeaders()}
 					</div>
+
+					<div style={{marginBottom: "2em"}}>
+						{this.tabs[this.state.activeTab].call()}
+					</div>
+
+
+
 				</div>
 			) :
 			(
@@ -207,7 +153,16 @@ export class JobDetailsComponent extends React.Component {
 			);
 	}
 
-	componentWillUnmount() {
-		this.updateSubscription.unsubscribe();
+	renderDetailHeader(header, renderer) {
+		return (
+			<div className="item">
+				<div className="content">
+					<div className="header">
+						{header}
+					</div>
+					{renderer.call(this)}
+				</div>
+			</div>
+		);
 	}
 }

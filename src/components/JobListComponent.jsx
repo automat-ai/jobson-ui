@@ -82,10 +82,19 @@ export class JobListComponent extends React.Component {
 					case "abort":
 						const href = jobSummary._links[linkName].href;
 						return (
-							<button key={i}
+							<button className="ui tiny compact negative button"
+											key={i}
 											onClick={() => self.props.api.postEmptyRequestToHref(href)}>
-								abort
+								Abort
 							</button>
+						);
+					case "details":
+						return (
+							<Link to={"/jobs/" + jobSummary.id}
+								 className="ui tiny compact button"
+								 key={i}>
+								View
+							</Link>
 						);
 					default:
 						return null;
@@ -106,9 +115,16 @@ export class JobListComponent extends React.Component {
 						<code>{jobSummary.id}</code>
 					</Link>
 				</td>
-				<td className="center aligned">{jobSummary.owner}</td>
-				<td className="center aligned">{jobSummary.name}</td>
-				<td className="center aligned">{this.getLatestStatus(jobSummary.timestamps)}</td>
+				<td className="center aligned">
+					{jobSummary.owner}
+				</td>
+				<td className="center aligned">
+					{jobSummary.name}
+				</td>
+				<td className="center aligned">
+					{Helpers.renderStatusField(
+						this.getLatestStatus(jobSummary.timestamps))}
+				</td>
 				<td className="center aligned">
 					{this.generateJobActions.bind(this)(jobSummary)}
 				</td>
@@ -123,7 +139,7 @@ export class JobListComponent extends React.Component {
 	onSearchKeyUp(e) {
 		if (e.key === "Enter") {
 			if (this.state.queryInInputBar !== this.state.currentQuery) {
-				this.pushHistory(this.state.pageNum, this.state.queryInInputBar);
+				this.pushHistory(0, this.state.queryInInputBar);
 			}
 		}
 	}
@@ -192,7 +208,7 @@ export class JobListComponent extends React.Component {
 		} else {
 			return (
 				<div>
-					<table className="ui very basic table">
+					<table id="job-list" className="ui very basic table">
 						<thead>
 						<tr>
 							<th className="center aligned">ID</th>

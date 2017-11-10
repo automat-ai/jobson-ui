@@ -60,11 +60,24 @@ export class SelectUiInput extends React.Component {
 								value={this.state.selected}>
 					{this.props.expectedInput.options.map(this.renderOption.bind(this))}
 				</select>
-				<div className="selection-description">
-					{this.props.expectedInput.options
-						.find(o => o.id === this.state.selected)
-						.description}
-				</div>
+				{this.selectedOptionHasDescription() ? this.renderDescription() : null}
+			</div>
+		);
+	}
+
+	findSelectedOption() {
+		return this.props.expectedInput.options
+			.find(o => o.id === this.state.selected);
+	}
+
+	selectedOptionHasDescription() {
+		return this.findSelectedOption().description;
+	}
+
+	renderDescription() {
+		return (
+			<div className="ui info message">
+				{this.findSelectedOption().description}
 			</div>
 		);
 	}

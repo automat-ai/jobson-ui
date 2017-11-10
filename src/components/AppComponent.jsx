@@ -66,7 +66,7 @@ export default class AppComponent extends React.Component {
 						<div className="ui secondary pointing menu">
 							<div className="ui container">
 								<span className="header item">
-									<Link to="/jobs">Jobson</Link>
+									Jobson
 								</span>
 
 								<Link to="/jobs" className="item">Jobs</Link>
@@ -74,6 +74,7 @@ export default class AppComponent extends React.Component {
 
 								<div className="right menu">
 									<em className="item">
+										<i className="user icon"></i>
 										{this.state.username}
 									</em>
 								</div>
@@ -94,13 +95,27 @@ export default class AppComponent extends React.Component {
 							</Switch>
 						</main>
 
-						<div className="ui divider"></div>
-
-						<footer className="ui container">
-							<div className="segment">
-								<Link to={"/about"}>about</Link>
+						<div className="ui inverted vertical footer segment">
+							<div className="ui container">
+								<div className="ui stackable inverted divided equal height stackable grid">
+									<div className="ten wide column">
+										<h4 className="ui inverted header">Jobson UI</h4>
+										<p>
+											An open-source (Apache v2) project that webifies command-line
+											applications.
+										</p>
+									</div>
+									<div className="six wide column">
+										<div className="ui inverted link list">
+											<a className="item" href="https://github.com/adamkewley/jobson-ui">Jobson UI Source Code</a>
+											<a className="item" href="https://github.com/adamkewley/jobson-ui/releases">Jobson UI Releases</a>
+											<a className="item" href="https://github.com/adamkewley/jobson">Jobson Source Code</a>
+											<a className="item" href="https://github.com/adamkewley/jobson/releases">Jobson Releases</a>
+										</div>
+									</div>
+								</div>
 							</div>
-						</footer>
+						</div>
 					</div>
 				</div>
 			</div>

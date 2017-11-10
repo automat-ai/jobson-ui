@@ -3,8 +3,23 @@ pre {
   height: 30em;
   white-space: pre-wrap;
   font-family: monospace;
+  line-height: normal;
   color: #ddd;
   background-color: #222;
   overflow: auto;
   font-size: smaller !important;
+}
+
+#job-list {
+  tr, td {
+    padding: 0.1em 0;
+  }
+}
+
+.ui.grid.jobson-condensed-grid {
+  margin-top: 1em;
+  > .column:not(.row) {
+    padding-top: 0.1em;
+    padding-bottom: 0;
+  }
 }
