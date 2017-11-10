@@ -20,6 +20,7 @@
 import React from "react";
 import {StdioComponent} from "./StdioComponent";
 import {Link} from "react-router-dom";
+import Timestamp from "react-timestamp";
 
 export class JobDetailsComponent extends React.Component {
 
@@ -27,6 +28,7 @@ export class JobDetailsComponent extends React.Component {
 		super();
 		this.state = {
 			jobLoaded: false,
+			showMoreDetails: false,
 			job: null,
 			outputsLoaded: false,
 			outputs: null,
@@ -55,21 +57,40 @@ export class JobDetailsComponent extends React.Component {
 
 	renderStatusChange(statusChange, i) {
 		return (
-			<li key={i}>
-				{statusChange.time} - {statusChange.status} - {statusChange.message}
-			</li>
+			<div className="item" key={i}>
+				<div className="content">
+					<div className="header">
+						{statusChange.message}
+					</div>
+					<div className="description">
+						Status changed to {statusChange.status}&nbsp;
+						<Timestamp time={statusChange.time} format='ago' />
+					</div>
+				</div>
+			</div>
 		);
 	}
 
 	getLatestStatus() {
-		return this.state.job.timestamps[this.state.job.timestamps.length - 1].status;
+		return this.state.job.timestamps[this.state.job.timestamps.length - 1];
 	}
 
 	renderJobOutput(jobOutput, key) {
 		return (
-			<li key={key}>
-				<a href={API_PREFIX + jobOutput.href}>{key}</a>
-			</li>
+		<div className="item" key={key}>
+			<div className="content">
+				<div className="header">
+					{key}
+				</div>
+				<div className="description">
+					<a className="ui primary button"
+						 href={API_PREFIX + jobOutput.href}>
+						<i className="download icon"></i>
+						Download
+					</a>
+				</div>
+			</div>
+		</div>
 		);
 	}
 
@@ -79,52 +100,106 @@ export class JobDetailsComponent extends React.Component {
 			.map(k => this.renderJobOutput(this.state.outputs[k], k));
 	}
 
+	renderEvents() {
+		return (
+			<div>
+				<h4>Events</h4>
+				<div className="ui relaxed divided list">
+					{this.state.job.timestamps.map(this.renderStatusChange)}
+				</div>
+			</div>
+		);
+	}
+
+	toggleDetails() {
+		this.setState({showMoreDetails: !this.state.showMoreDetails});
+	}
+
 	render() {
 		return this.state.jobLoaded ?
 			(
-				<div id="job-details">
-					<h1><Link to="/jobs">jobs</Link> / {this.state.job.id}</h1>
-					<div>
-						<span className="prop-name">
-							Created by
-						</span>
-						<span className="prop-value">
-							{this.state.job.owner}
-						</span>
-
-						<span className="prop-name">
-							Name
-						</span>
-						<span className="prop-value">
-							{this.state.job.name}
-						</span>
-
-						<span className="prop-name">
-							Status
-						</span>
-						<span className="prop-value">
-							{this.getLatestStatus()}
-						</span>
+				<div>
+					<div className="segment">
+						<div className="ui breadcrumb">
+							<Link to="/jobs" className="section">jobs</Link>
+							<div className="divider">/</div>
+							<div className="active section">
+								<h1>{this.state.job.id}</h1>
+							</div>
+						</div>
 					</div>
 
-					<ul>
-						{this.state.job.timestamps.map(this.renderStatusChange)}
-					</ul>
+					<div className="ui segment">
 
-					<h2>Outputs</h2>
-					<ul>
+						<div className="ui horizontal list">
+
+							<div className="item">
+								<div className="content">
+									<div className="header">
+										Job Name
+									</div>
+									{this.state.job.name}
+								</div>
+							</div>
+
+							<div className="item">
+								<div className="content">
+									<div className="header">
+										Created by
+									</div>
+									{this.state.job.owner}
+								</div>
+							</div>
+
+							<div className="item">
+								<div className="content">
+									<div className="header">
+										Latest Status Change
+									</div>
+									{this.getLatestStatus().status} (<Timestamp time={this.getLatestStatus().time} format='ago' />), <a onClick={this.toggleDetails.bind(this)}>
+										{this.state.showMoreDetails ? "hide" : "show" } events
+									</a>
+								</div>
+							</div>
+
+						</div>
+					</div>
+
+					{this.state.showMoreDetails ? this.renderEvents() : null}
+
+					<h2 className="ui dividing header">
+						Outputs
+					</h2>
+
+					<div className="ui relaxed divided list">
 						{this.state.outputsLoaded ? this.renderOutputs() : null }
-					</ul>
 
-					<h2>Stdout</h2>
-					<StdioComponent
-						fetchStdio={() => this.props.api.fetchJobStdout(this.state.job.id)}
-						onStdioUpdate={() => this.props.api.onJobStdoutUpdate(this.state.job.id)}/>
+						<div className="item">
+							<div className="content">
+								<div className="header">
+									stdout
+								</div>
+								<div className="description">
+									<StdioComponent
+										fetchStdio={() => this.props.api.fetchJobStdout(this.state.job.id)}
+										onStdioUpdate={() => this.props.api.onJobStdoutUpdate(this.state.job.id)}/>
+								</div>
+							</div>
+						</div>
 
-					<h2>Stderr</h2>
-					<StdioComponent
-						fetchStdio={() => this.props.api.fetchJobStderr(this.state.job.id)}
-						onStdioUpdate={() => this.props.api.onJobStderrUpdate(this.state.job.id)}/>
+						<div className="item">
+							<div className="content">
+								<div className="header">
+									stderr
+								</div>
+								<div className="description">
+									<StdioComponent
+										fetchStdio={() => this.props.api.fetchJobStderr(this.state.job.id)}
+										onStdioUpdate={() => this.props.api.onJobStderrUpdate(this.state.job.id)}/>
+								</div>
+							</div>
+						</div>
+					</div>
 				</div>
 			) :
 			(

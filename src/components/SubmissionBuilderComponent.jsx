@@ -118,28 +118,38 @@ export class SubmissionBuilderComponent extends React.Component {
 							{this.state.errorMessage}
 						</div> : null}
 
-					<div className="expected-input">
-						<label htmlFor="job-name">Job Name</label>
-						<input type="text"
-									 id="job-name"
-									 placeholder="Job Name"
-									 value={this.state.jobName}
-									 onChange={this.updateJobName.bind(this)}/>
+					<div className="field">
+						<label htmlFor="job-name">
+							Job Name
+						</label>
+						<div className="ui fluid input">
+							<input type="text"
+										 id="job-name"
+										 placeholder="Job Name"
+										 value={this.state.jobName}
+										 className="ui fluid input"
+										 onChange={this.updateJobName.bind(this)} />
+						</div>
 					</div>
 
 					<div>
 						{this.state.expectedInputComponents}
 					</div>
 
-					<button id="submit-btn"
-									onClick={this.submitJob.bind(this)}>
-						Submit Job
-					</button>
+					<div style={{marginTop: "1em", textAlign: "center"}}>
+						<div>
+							<button className="ui primary button"
+											onClick={this.submitJob.bind(this)}>
+								Submit Job
+							</button>
+						</div>
 
-					<button id="download-btn"
-									onClick={this.downloadRequest.bind(this)}>
-						Download Request (debug)
-					</button>
+						<button className="ui tiny button"
+										onClick={this.downloadRequest.bind(this)}>
+							Download Request (debug)
+						</button>
+					</div>
+
 				</div>
 			) :
 			<span>Loading spec</span>;
@@ -165,12 +175,18 @@ export class SubmissionBuilderComponent extends React.Component {
 		const inputComponent = React.createElement(componentCtor, componentProps, null);
 
 		return (
-			<div className="expected-input" key={expectedInput.id}>
-				<label htmlFor={expectedInput.id}>{expectedInput.name}</label>
-				<div className="input-description">
-					{expectedInput.description}
-				</div>
+			<div className="field" key={expectedInput.id}>
+				<label htmlFor={"expected-input_" + expectedInput.id}>{expectedInput.name}</label>
+				{expectedInput.description ? this.renderDescription(expectedInput) : null}
 				{inputComponent}
+			</div>
+		);
+	}
+
+	renderDescription(expectedInput) {
+		return (
+			<div>
+				{expectedInput.description}
 			</div>
 		);
 	}

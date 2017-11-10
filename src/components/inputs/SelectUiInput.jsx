@@ -55,7 +55,9 @@ export class SelectUiInput extends React.Component {
 	render() {
 		return (
 			<div>
-				<select onChange={this.onUiSelectionChange.bind(this)} value={this.state.selected}>
+				<select id={"expected-input_" + this.props.expectedInput.id}
+								onChange={this.onUiSelectionChange.bind(this)}
+								value={this.state.selected}>
 					{this.props.expectedInput.options.map(this.renderOption.bind(this))}
 				</select>
 				<div className="selection-description">

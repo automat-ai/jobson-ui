@@ -101,15 +101,15 @@ export class JobListComponent extends React.Component {
 	renderJobSummary(jobSummary, i) {
 		return (
 			<tr key={i}>
-				<td>
+				<td className="center aligned">
 					<Link to={"/jobs/" + jobSummary.id}>
-						{jobSummary.id}
+						<code>{jobSummary.id}</code>
 					</Link>
 				</td>
-				<td>{jobSummary.owner}</td>
-				<td>{jobSummary.name}</td>
-				<td>{this.getLatestStatus(jobSummary.timestamps)}</td>
-				<td>
+				<td className="center aligned">{jobSummary.owner}</td>
+				<td className="center aligned">{jobSummary.name}</td>
+				<td className="center aligned">{this.getLatestStatus(jobSummary.timestamps)}</td>
+				<td className="center aligned">
 					{this.generateJobActions.bind(this)(jobSummary)}
 				</td>
 			</tr>
@@ -152,7 +152,8 @@ export class JobListComponent extends React.Component {
 	}
 
 	userHasNoJobs() {
-		return this.state.jobSummaries.length === 0 &&
+		return !this.state.loading &&
+			this.state.jobSummaries.length === 0 &&
 			this.state.currentQuery.length === 0 &&
 			this.state.pageNum === 0;
 	}
@@ -162,29 +163,43 @@ export class JobListComponent extends React.Component {
 
 		if (this.userHasNoJobs()) {
 			return (
-				<div className="missing-banner">
-					You don't appear to have any jobs, <Link to="/submit">
-					Submit your first job
-				</Link>
+			<div className="ui info icon message">
+				<i className="info circle icon"></i>
+				<div className="content">
+					<div className="header">
+						No jobs yet!
+					</div>
+					<p>
+						You don't seem to have any jobs yet
+						, <Link className="ui primary button" to="/submit">
+							Submit your first job
+						</Link>
+					</p>
 				</div>
+			</div>
 			);
 		} else if (this.state.jobSummaries.length === 0) {
 			return (
-				<div className="missing-banner">
-					No jobs found
+				<div className="ui negative icon message">
+					<i className="warning icon"></i>
+					<div className="content">
+						<div className="header">
+							Your search returned no results
+						</div>
+					</div>
 				</div>
 			);
 		} else {
 			return (
 				<div>
-					<table>
+					<table className="ui very basic table">
 						<thead>
 						<tr>
-							<th>ID</th>
-							<th>Owner</th>
-							<th>Name</th>
-							<th>Status</th>
-							<th>Actions</th>
+							<th className="center aligned">ID</th>
+							<th className="center aligned">Owner</th>
+							<th className="center aligned">Name</th>
+							<th className="center aligned">Status</th>
+							<th className="center aligned">Actions</th>
 						</tr>
 						</thead>
 
@@ -193,15 +208,17 @@ export class JobListComponent extends React.Component {
 						</tbody>
 					</table>
 
-					<button className="btn-default"
-									disabled={this.state.pageNum === 0}
-									onClick={this.onClickedPreviousPage.bind(this)}>
-						Newer Jobs
-					</button>
-					<button className="btn-default"
-									onClick={this.onClickedNextPage.bind(this)}>
-						Older Jobs
-					</button>
+					<div style={{textAlign: "center"}}>
+						<button className="ui left attached button"
+										disabled={this.state.pageNum === 0}
+										onClick={this.onClickedPreviousPage.bind(this)}>
+							Newer Jobs
+						</button>
+						<button className="ui right attached button"
+										onClick={this.onClickedNextPage.bind(this)}>
+							Older Jobs
+						</button>
+					</div>
 				</div>
 			);
 		}
@@ -209,15 +226,18 @@ export class JobListComponent extends React.Component {
 
 	render() {
 		return (
-			<div id="jobs-list">
-				<input type="text"
-							 id="jobs-search"
-							 placeholder="Search jobs..."
-							 onChange={this.onSearchChange.bind(this)}
-							 onKeyUp={this.onSearchKeyUp.bind(this)}
-							 value={this.state.queryInInputBar}
-							 autoFocus
-				       disabled={this.userHasNoJobs()} />
+			<div>
+				<div className="ui fluid left icon input" style={{ marginBottom: "2em" }}>
+					<i className="search icon"></i>
+					<input type="text"
+								 id="jobs-search"
+								 placeholder="Search jobs..."
+								 onChange={this.onSearchChange.bind(this)}
+								 onKeyUp={this.onSearchKeyUp.bind(this)}
+								 value={this.state.queryInInputBar}
+								 autoFocus
+								 disabled={this.userHasNoJobs()} />
+				</div>
 
 				{this.renderJobSummaries()}
 

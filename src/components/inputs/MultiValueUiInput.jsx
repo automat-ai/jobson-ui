@@ -74,18 +74,20 @@ export class MultiValueUiInput extends React.Component {
   renderHelperButtons() {
   	return (
   		<div className="btn-bar">
-				<button className="btn-default"
+				<button className="ui icon button"
 								onClick={this.onClickedFromFile.bind(this)}>
+					<i className="upload icon"></i>
 					From File
 				</button>
 
-				<button className="btn-default"
+				<button className="ui icon button"
 								onClick={this.onClickedDownload.bind(this)}
 				        disabled={this.state.values.length === 0}>
+					<i className="download icon"></i>
 					Download
 				</button>
 
-				<button className="btn-default"
+				<button className="ui button"
 								onClick={this.onClickedClear.bind(this)}
 								disabled={this.state.values.length === 0}>
 					Clear

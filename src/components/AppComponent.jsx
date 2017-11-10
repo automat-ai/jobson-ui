@@ -18,7 +18,7 @@
  */
 
 import React from 'react';
-import '../../styles/index.scss';
+//import '../../styles/index.scss';
 import {HttpService} from "../HttpService";
 import {JobsonAPI} from "../JobsonAPI";
 import {JobListComponent} from "./JobListComponent";
@@ -62,22 +62,26 @@ export default class AppComponent extends React.Component {
 
 				<div id="root-container">
 					<div>
-						<div id="navbar">
-							<span id="title">Jobson</span>
 
-							<nav>
-								<Link to="/jobs">Jobs</Link>
-								<Link to="/submit">Submit Job</Link>
-							</nav>
+						<div className="ui secondary pointing menu">
+							<div className="ui container">
+								<span className="header item">
+									<Link to="/jobs">Jobson</Link>
+								</span>
 
-							<div className="navbar-right">
-						<span id="navbar-username">
-							{this.state.username}
-						</span>
+								<Link to="/jobs" className="item">Jobs</Link>
+								<Link to="/submit" className="item">Submit Job</Link>
+
+								<div className="right menu">
+									<em className="item">
+										{this.state.username}
+									</em>
+								</div>
 							</div>
 						</div>
 
-						<main>
+
+						<main className="ui container" style={{marginBottom: "1em"}}>
 							<Switch>
 								<Route path="/submit"
 											 render={props => <SubmitJobComponent api={this.state.api} routeProps={props} />}/>
@@ -90,8 +94,12 @@ export default class AppComponent extends React.Component {
 							</Switch>
 						</main>
 
-						<footer>
-							<Link to={"/about"}>about</Link>
+						<div className="ui divider"></div>
+
+						<footer className="ui container">
+							<div className="segment">
+								<Link to={"/about"}>about</Link>
+							</div>
 						</footer>
 					</div>
 				</div>

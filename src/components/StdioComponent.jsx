@@ -88,14 +88,19 @@ export class StdioComponent extends React.Component {
 			return (
 				<div>
 					<div className="input-bar">
-						<button className="btn-default"
+						<button className="ui primary button"
 										onClick={this.onClickDownload.bind(this)}>
+							<i className="download icon"></i>
 							Download
 						</button>
 
-						<input placeholder="grep"
-									 value={this.state.grepFilter}
-									 onChange={this.onGrepFilterChanged.bind(this)} />
+						<div className="ui icon input">
+							<input placeholder="grep"
+										 value={this.state.grepFilter}
+										 onChange={this.onGrepFilterChanged.bind(this)} />
+							<i className="search icon"></i>
+						</div>
+
 					</div>
 
 					<pre ref={(el) => { this.el = el } }>

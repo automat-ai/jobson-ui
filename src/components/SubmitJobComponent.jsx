@@ -78,20 +78,33 @@ export class SubmitJobComponent extends React.Component {
 		} else selectedSpec = this.state.jobSpecSummaries[0];
 
 		return (
-			<div id="submit-job">
+			<div className="ui form">
 				<h1>Submit Job</h1>
 
-				<label htmlFor="job-spec">Job Spec</label>
-				<select id="job-spec"
-								value={this.state.selectedSpecId}
-								onChange={this.onSelectSpecSummary.bind(this)}>
+				<h4 className="ui dividing header">
+					Job Spec Selection
+				</h4>
 
-					{this.state.jobSpecSummaries.map(this.renderJobSpecSummary)}
-				</select>
+				<div className="field">
+					<label htmlFor="job-spec">
+						Job Spec
+					</label>
+					<select id="job-spec"
+									className="ui fluid dropdown"
+									value={this.state.selectedSpecId}
+									onChange={this.onSelectSpecSummary.bind(this)}>
 
-				<div id="spec-description">
+						{this.state.jobSpecSummaries.map(this.renderJobSpecSummary)}
+					</select>
+				</div>
+
+				<div className="ui info message">
 					<code>{selectedSpec.id}</code>: {selectedSpec.description}
 				</div>
+
+				<h4 className="ui dividing header">
+					Job Details
+				</h4>
 
 				<SubmissionBuilderComponent
 					specId={selectedSpec.id}
@@ -107,12 +120,20 @@ export class SubmitJobComponent extends React.Component {
 				return this.renderJobSubmissionUi();
 			} else {
 				return (
-					<div className="missing-banner">
-						The server doesn't appear to have any jobs you can submit.
-						This is probably because the server hasn't been configured
-						with any job specs yet. The server admin should add job specs
-						to this system (e.g. with <code>jobson generate spec</code>)
+				<div className="ui info icon message">
+					<i className="info circle icon"></i>
+					<div className="content">
+						<div className="header">
+							No jobs yet!
+						</div>
+						<p>
+							The server doesn't appear to have any jobs you can submit.
+							This is probably because the server hasn't been configured
+							with any job specs yet. The server admin should add job specs
+							to this system (e.g. with <code>jobson generate spec</code>)
+						</p>
 					</div>
+				</div>
 				);
 			}
 		} else return <em>Loading job specs</em>;

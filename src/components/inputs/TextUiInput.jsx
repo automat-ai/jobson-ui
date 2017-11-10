@@ -50,8 +50,13 @@ export class TextUiInput extends React.Component {
 	}
 
 	render() {
-		return <input type="text"
-									value={this.state.value}
-									onChange={this.onChange.bind(this)} />;
+		return (
+			<div className="ui fluid input">
+				<input type="text"
+							 id={ "expected-input_" + this.props.expectedInput.id}
+							 value={this.state.value}
+							 onChange={this.onChange.bind(this)} />
+			</div>
+		);
 	}
 }
