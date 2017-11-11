@@ -71,12 +71,6 @@ export class StdioComponent extends React.Component {
 			.join("\n");
 	}
 
-	onClickDownload() {
-		this.props
-			.fetchStdio()
-			.then(blob => Helpers.promptUserToDownload(blob, "data"));
-	}
-
 	componentDidUpdate() {
 		if (this.el) this.el.scrollTop = this.el.scrollHeight;
 	}
@@ -87,20 +81,11 @@ export class StdioComponent extends React.Component {
 		} else if (this.state.content.length > 0)
 			return (
 				<div>
-					<div className="input-bar">
-						<button className="ui primary button"
-										onClick={this.onClickDownload.bind(this)}>
-							<i className="download icon"></i>
-							Download
-						</button>
-
-						<div className="ui icon input">
-							<input placeholder="grep"
-										 value={this.state.grepFilter}
-										 onChange={this.onGrepFilterChanged.bind(this)} />
-							<i className="search icon"></i>
-						</div>
-
+					<div className="ui icon input">
+						<input placeholder="grep"
+									 value={this.state.grepFilter}
+									 onChange={this.onGrepFilterChanged.bind(this)} />
+						<i className="search icon"></i>
 					</div>
 
 					<pre ref={(el) => { this.el = el } }>
@@ -110,7 +95,13 @@ export class StdioComponent extends React.Component {
 					</pre>
 				</div>
 			);
-		else return <div className="missing-banner">No content</div>;
+		else return (
+				<div className="ui message">
+					<p>
+						No content
+					</p>
+				</div>
+			);
 	}
 
 	componentWillUnmount() {

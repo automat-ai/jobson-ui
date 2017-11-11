@@ -26,7 +26,8 @@ export class JobListComponent extends React.Component {
 	constructor(props) {
 		super(props);
 
-		const params = Helpers.extractParams(props.routeProps.location.search);
+		const params =
+			Helpers.extractParams(props.routeProps.location.search);
 		params.page = parseInt(params.page || 0);
 		params.query = params.query || "";
 
@@ -50,7 +51,8 @@ export class JobListComponent extends React.Component {
 	}
 
 	componentWillReceiveProps(newProps) {
-		const params = Helpers.extractParams(newProps.routeProps.location.search);
+		const params =
+			Helpers.extractParams(newProps.routeProps.location.search);
 		params.page = parseInt(params.page || 0);
 		params.query = params.query || "";
 
@@ -92,11 +94,19 @@ export class JobListComponent extends React.Component {
 					case "abort":
 						const href = jobSummary._links[linkName].href;
 						return (
-							<button key={i}
-											onClick={() =>
-												self.props.api.postEmptyRequestToHref(href)}>
-								abort
+							<button className="ui tiny compact negative button"
+											key={i}
+											onClick={() => self.props.api.postEmptyRequestToHref(href)}>
+								Abort
 							</button>
+						);
+					case "details":
+						return (
+							<Link to={"/jobs/" + jobSummary.id}
+								 className="ui tiny compact button"
+								 key={i}>
+								View
+							</Link>
 						);
 					default:
 						return null;
@@ -109,14 +119,39 @@ export class JobListComponent extends React.Component {
 		return timestamps[timestamps.length - 1].status;
 	}
 
+	renderJobSummary(jobSummary, i) {
+		return (
+			<tr key={i}>
+				<td className="center aligned">
+					<Link to={"/jobs/" + jobSummary.id}>
+						<code>{jobSummary.id}</code>
+					</Link>
+				</td>
+				<td className="center aligned">
+					{jobSummary.owner}
+				</td>
+				<td className="center aligned">
+					{jobSummary.name}
+				</td>
+				<td className="center aligned">
+					{Helpers.renderStatusField(
+						this.getLatestStatus(jobSummary.timestamps))}
+				</td>
+				<td className="center aligned">
+					{this.generateJobActions.bind(this)(jobSummary)}
+				</td>
+			</tr>
+		);
+	}
+
 	onSearchInputChange(e) {
-		this.setState({ enteredQuery: e.target.value });
+		this.setState({ queryInInputBar: e.target.value });
 	}
 
 	onSearchKeyUp(e) {
 		if (e.key === "Enter") {
-			if (this.state.enteredQuery !== this.state.activeQuery) {
-				this.pushHistory(this.state.page, this.state.enteredQuery);
+			if (this.state.queryInInputBar !== this.state.currentQuery) {
+				this.pushHistory(0, this.state.queryInInputBar);
 			}
 		}
 	}
@@ -265,7 +300,7 @@ export class JobListComponent extends React.Component {
 
 		return (
 			<div>
-				<table className="ui very basic table">
+				<table id="job-list" className="ui very basic table" >
 					<thead>
 					<tr>
 						<th className="center aligned">ID</th>
@@ -311,10 +346,11 @@ export class JobListComponent extends React.Component {
 					{jobSummary.name}
 				</td>
 				<td className="center aligned">
-					{this.getLatestStatus(jobSummary.timestamps)}
+					{Helpers.renderStatusField(
+						this.getLatestStatus(jobSummary.timestamps))}
 				</td>
 				<td className="center aligned">
-					{this.generateJobActions.bind(this)(jobSummary)}
+					{this.generateJobActions(jobSummary)}
 				</td>
 			</tr>
 		);

@@ -94,6 +94,10 @@ export class JobsonAPI {
   	return this.http.get(`${API_PREFIX}/v1/jobs/${jobId}/outputs`).then(resp => JSON.parse(resp));
 	}
 
+	fetchJobInputs(jobId) {
+  	return this.http.get(`${API_PREFIX}/v1/jobs/${jobId}/inputs`).then(resp => JSON.parse(resp));
+	}
+
 	fetchCurrentUser() {
   	return this.http.get(`${API_PREFIX}/v1/users/current`).then(resp => JSON.parse(resp).id);
 	}

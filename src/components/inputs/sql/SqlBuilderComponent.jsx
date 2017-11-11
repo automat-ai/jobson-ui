@@ -123,6 +123,71 @@ from ${this.state.table.id}${whereClause};`;
 		);
 	}
 
+	render() {
+		return (
+			<div>
+				{this.renderTableFilters()}
+
+				{this.renderTable()}
+			</div>
+		);
+	}
+
+	renderTableFilters() {
+		return (
+			<div className="inline fields">
+
+				<div className="ui left icon input"
+						 style={{marginRight: "1em", width: "auto" }}>
+					<i className="search icon"></i>
+					<input type="search"
+								 placeholder="Search"
+								 value={this.state.search}
+								 onChange={this.onSearchChanged.bind(this)} />
+				</div>
+				<button className="ui tiny button" onClick={this.onClickedSelectAll.bind(this)}>
+					Select All
+				</button>
+
+				<button className="ui tiny button"
+								onClick={this.onClickedClearSelection.bind(this)}
+								disabled={this.state.columnsToExtract.length === 0}>
+					Clear Selection
+				</button>
+
+				<div className="ui checkbox">
+					<input type="checkbox"
+								 id="only-show-selected-columns"
+								 checked={this.state.onlyShowSelectedColumns}
+								 onChange={(e) => this.setState({ onlyShowSelectedColumns: e.target.checked })} />
+					<label htmlFor="only-show-selected-columns">
+						Only show selected columns
+					</label>
+				</div>
+			</div>
+		);
+	}
+
+	renderTable() {
+		return (
+			<table className="ui compact celled table">
+				<colgroup>
+					<col width="10%" />
+					<col width="40%" />
+					<col width="50%" />
+				</colgroup>
+				<thead>
+				<tr>
+					<th>Extract?</th>
+					<th>Description</th>
+					<th>Filter</th>
+				</tr>
+				</thead>
+				{this.renderTableBody()}
+			</table>
+		);
+	}
+
 	renderTableBody() {
 		const rows =
 			this.state.table.columns
@@ -144,51 +209,5 @@ from ${this.state.table.id}${whereClause};`;
 				{rows}
 				</tbody>
 			);
-	}
-
-	render() {
-		return (
-			<div>
-				<div className="table-filters">
-					<button className="btn-default" onClick={this.onClickedSelectAll.bind(this)}>
-						Select All
-					</button>
-
-					<button className="btn-default" onClick={this.onClickedClearSelection.bind(this)}>
-						Clear Selection
-					</button>
-
-					<input placeholder="Search"
-								 value={this.state.search}
-								 onChange={this.onSearchChanged.bind(this)} />
-
-					<label htmlFor="only-show-selected-columns">
-						Only show selected columns
-					</label>
-					<input id="only-show-selected-columns"
-								 type="checkbox"
-								 checked={this.state.onlyShowSelectedColumns}
-								 onChange={(e) => this.setState({ onlyShowSelectedColumns: e.target.checked })} />
-				</div>
-
-				<div className="table-wrapper">
-					<table>
-						<colgroup>
-							<col width="10%" />
-							<col width="40%" />
-							<col width="50%" />
-						</colgroup>
-						<thead>
-						<tr>
-							<th>Extract?</th>
-							<th>Description</th>
-							<th>Filter</th>
-						</tr>
-						</thead>
-						{this.renderTableBody()}
-					</table>
-				</div>
-			</div>
-		);
 	}
 }

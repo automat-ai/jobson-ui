@@ -17,6 +17,8 @@
  * under the License.
  */
 
+import React from "react";
+
 export class Helpers {
 
 	static promptUserToDownloadAsJSON(obj) {
@@ -163,6 +165,33 @@ export class Helpers {
 		} else {
 			return prefix + window.location.pathname + "/" + p;
 		}
+	}
+
+	static renderStatusField(status) {
+		switch (status) {
+			case "aborted":
+				return <div className="ui orange horizontal basic label">{status}</div>;
+			case "fatal-error":
+				return <div className="ui red horizontal basic label">{status}</div>;
+			case "finished":
+				return <div className="ui green horizontal basic label">{status}</div>;
+			case "running":
+				return <div className="ui horizontal basic label">
+					<div className="ui tiny active inline loader"></div> Running
+				</div>;
+			default:
+				return <div className="ui horizontal basic label">{status}</div>;
+		}
+	}
+
+	static renderDownloadButton(href) {
+		return (
+			<a className="ui right floated primary button"
+				 href={href}>
+				<i className="download icon"></i>
+				Download
+			</a>
+		);
 	}
 }
 

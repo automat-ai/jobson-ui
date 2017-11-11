@@ -19,6 +19,7 @@
 
 import React from "react";
 import {SqlBuilderComponent} from "./sql/SqlBuilderComponent";
+import {SelectUiInput} from "./SelectUiInput";
 
 export class SqlUiInput extends React.Component {
 
@@ -30,8 +31,9 @@ export class SqlUiInput extends React.Component {
 		};
 	}
 
-	onTableSelectionChange(e) {
-		const selectedTable = this.props.expectedInput.tables[e.target.value];
+	onTableSelectionChange(selectedTableId) {
+		const selectedTable =
+			this.props.expectedInput.tables.find(t => t.id === selectedTableId);
 		this.setState({selectedTable});
 	}
 
@@ -45,27 +47,25 @@ export class SqlUiInput extends React.Component {
 
 	render() {
 		return (
-			<div className="sql-input">
-				<div className="expected-input">
-					<select onChange={this.onTableSelectionChange.bind(this)}>
-						{this.props.expectedInput.tables.map(this.renderTableOption.bind(this))}
-					</select>
+			<div>
+				<label>
+					Table
+				</label>
+				<SelectUiInput expectedInput={{ options: this.props.expectedInput.tables }}
+											 onValueChanged={this.onTableSelectionChange.bind(this)} />
 
-					<div className="selection-description">
-						{this.state.selectedTable.description}
-					</div>
-				</div>
+				<label>
+					Query
+				</label>
 
-				<div className="expected-input">
-					<label>Columns &amp; Filters</label>
-					<div className="input-description">
-						Select columns
-					</div>
-					<SqlBuilderComponent
-						table={this.state.selectedTable}
-						onQueryChanged={this.onQueryChanged.bind(this)}/>
-				</div>
+				<SqlBuilderComponent
+					table={this.state.selectedTable}
+					onQueryChanged={this.onQueryChanged.bind(this)}/>
 			</div>
 		);
+	}
+
+	toOption(table, i) {
+
 	}
 }
