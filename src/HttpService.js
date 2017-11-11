@@ -40,7 +40,14 @@ export class HttpService {
 				if (200 <= req.status && req.status < 300) {
 					resolve(req.response);
 				} else {
-					reject(JSON.parse(req.response));
+					try {
+						reject(JSON.parse(req.response));
+					} catch (e) {
+						reject({
+							code: req.status,
+							message: "Error",
+						});
+					}
 				}
 			};
 

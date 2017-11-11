@@ -31,18 +31,20 @@ export class JobListComponent extends React.Component {
 		params.query = params.query || "";
 
 		this.state = {
-			loading: true,
-			currentQuery: params.query,
-			queryInInputBar: params.query,
-			pageNum: params.page,
-			jobSummaries: [],
+			isLoadingJobs: true,
+			jobLoadingError: null,
+			activeQuery: params.query,
+			enteredQuery: params.query,
+			page: params.page,
+			jobs: [],
+			jobUpdatesSubscription: null,
 		};
 	}
 
 	componentWillMount() {
-		this.updateSubscription = this.props.api
+		this.jobUpdatesSubscription = this.props.api
 			.onAllJobStatusChanges()
-			.subscribe(() => this.updateJobList());
+			.subscribe(this.updateJobList.bind(this));
 
 		this.updateJobList();
 	}
@@ -52,23 +54,31 @@ export class JobListComponent extends React.Component {
 		params.page = parseInt(params.page || 0);
 		params.query = params.query || "";
 
-		if (params.page != this.state.pageNum ||
-		    params.query != this.state.currentQuery) {
+		if (params.page != this.state.page ||
+		    params.query != this.state.activeQuery) {
 
 			this.setState({
-				pageNum: params.page,
-				currentQuery: params.query,
-				queryInInputBar: params.query
-			}, () => this.updateJobList());
+				page: params.page,
+				activeQuery: params.query,
+				enteredQuery: params.query,
+			}, this.updateJobList.bind(this));
 		}
 	}
 
+	componentWillUnmount() {
+		if (this.jobUpdatesSubscription !== null)
+			this.jobUpdatesSubscription.unsubscribe();
+	}
+
 	updateJobList() {
-		this.setState({loading: true}, () => {
+		this.setState({isLoadingJobs: true}, () => {
 			this.props.api
-				.fetchJobSummaries(this.state.currentQuery, this.state.pageNum)
+				.fetchJobSummaries(this.state.activeQuery, this.state.page)
 				.then(page => {
-					this.setState({loading: false, jobSummaries: page.entries});
+					this.setState({isLoadingJobs: false, jobLoadingError: null, jobs: page.entries});
+				})
+				.catch(loadingError => {
+					this.setState({isLoadingJobs: false, jobLoadingError: loadingError});
 				});
 		});
 	}
@@ -83,7 +93,8 @@ export class JobListComponent extends React.Component {
 						const href = jobSummary._links[linkName].href;
 						return (
 							<button key={i}
-											onClick={() => self.props.api.postEmptyRequestToHref(href)}>
+											onClick={() =>
+												self.props.api.postEmptyRequestToHref(href)}>
 								abort
 							</button>
 						);
@@ -98,32 +109,14 @@ export class JobListComponent extends React.Component {
 		return timestamps[timestamps.length - 1].status;
 	}
 
-	renderJobSummary(jobSummary, i) {
-		return (
-			<tr key={i}>
-				<td className="center aligned">
-					<Link to={"/jobs/" + jobSummary.id}>
-						<code>{jobSummary.id}</code>
-					</Link>
-				</td>
-				<td className="center aligned">{jobSummary.owner}</td>
-				<td className="center aligned">{jobSummary.name}</td>
-				<td className="center aligned">{this.getLatestStatus(jobSummary.timestamps)}</td>
-				<td className="center aligned">
-					{this.generateJobActions.bind(this)(jobSummary)}
-				</td>
-			</tr>
-		);
-	}
-
-	onSearchChange(e) {
-		this.setState({ queryInInputBar: e.target.value });
+	onSearchInputChange(e) {
+		this.setState({ enteredQuery: e.target.value });
 	}
 
 	onSearchKeyUp(e) {
 		if (e.key === "Enter") {
-			if (this.state.queryInInputBar !== this.state.currentQuery) {
-				this.pushHistory(this.state.pageNum, this.state.queryInInputBar);
+			if (this.state.enteredQuery !== this.state.activeQuery) {
+				this.pushHistory(this.state.page, this.state.enteredQuery);
 			}
 		}
 	}
@@ -140,29 +133,103 @@ export class JobListComponent extends React.Component {
 		if (page > 0) rest.push(`page=${page}`);
 		if (query.length > 0) rest.push(`query=${query}`);
 
-		return rest.length === 0 ? start : start + "?" + rest.join("&");
+		return rest.length === 0 ?
+			start :
+			start + "?" + rest.join("&");
 	}
 
 	onClickedNextPage() {
-		this.pushHistory(this.state.pageNum + 1, this.state.currentQuery);
+		this.pushHistory(this.state.page + 1, this.state.activeQuery);
 	}
 
 	onClickedPreviousPage() {
-		this.pushHistory(this.state.pageNum - 1, this.state.currentQuery);
+		this.pushHistory(this.state.page - 1, this.state.activeQuery);
 	}
 
 	userHasNoJobs() {
-		return !this.state.loading &&
-			this.state.jobSummaries.length === 0 &&
-			this.state.currentQuery.length === 0 &&
-			this.state.pageNum === 0;
+		return !this.state.isLoadingJobs &&
+			this.state.jobs.length === 0 &&
+			this.state.activeQuery.length === 0 &&
+			this.state.page === 0;
 	}
 
-	renderJobSummaries() {
-		const renderJobSummary = this.renderJobSummary.bind(this);
 
-		if (this.userHasNoJobs()) {
-			return (
+	render() {
+		return (
+			<div>
+				{this.renderSearchBar()}
+				{this.renderMainArea()}
+			</div>
+		);
+	}
+
+	renderSearchBar() {
+		return (
+			<div className="ui fluid left icon input" style={{ marginBottom: "2em" }}>
+				<i className="search icon"></i>
+				<input type="text"
+							 id="jobs-search"
+							 placeholder="Search jobs..."
+							 onChange={this.onSearchInputChange.bind(this)}
+							 onKeyUp={this.onSearchKeyUp.bind(this)}
+							 value={this.state.enteredQuery}
+							 autoFocus
+							 disabled={this.userHasNoJobs()} />
+			</div>
+		);
+	}
+
+	renderMainArea() {
+		if (this.state.isLoadingJobs)
+			return this.renderLoadingMessage();
+		else if (this.state.jobLoadingError !== null)
+		  return this.renderLoadingErrorMessage();
+		else if (this.userHasNoJobs())
+			return this.renderUserHasNoJobsMessage();
+		else if (this.state.jobs.length === 0)
+			return this.renderNoResultsMessage();
+		else
+			return this.renderJobSummaries();
+	}
+
+	renderLoadingMessage() {
+		return (
+			<div className="ui icon message">
+				<i className="notched circle loading icon"></i>
+				<div className="content">
+					<div className="header">
+						Loading
+					</div>
+					<p>Fetching jobs from the Jobson API</p>
+				</div>
+			</div>
+		);
+	}
+
+	renderLoadingErrorMessage() {
+		return (
+			<div className="ui negative icon message">
+				<i className="warning circle icon"></i>
+				<div className="content">
+					<div className="header">
+						Error Loading Jobs
+					</div>
+					<p>
+						There was an error loading jobs from the Jobson API.
+						The error message is: {this.state.jobLoadingError.message}.
+					</p>
+					<button className="ui primary icon button"
+					        onClick={this.updateJobList.bind(this)}>
+						<i className="refresh icon"></i>
+						Try Again
+					</button>
+				</div>
+			</div>
+		);
+	}
+
+	renderUserHasNoJobsMessage() {
+		return (
 			<div className="ui info icon message">
 				<i className="info circle icon"></i>
 				<div className="content">
@@ -172,82 +239,84 @@ export class JobListComponent extends React.Component {
 					<p>
 						You don't seem to have any jobs yet
 						, <Link className="ui primary button" to="/submit">
-							Submit your first job
-						</Link>
+						Submit your first job
+					</Link>
 					</p>
 				</div>
-			</div>
-			);
-		} else if (this.state.jobSummaries.length === 0) {
-			return (
-				<div className="ui negative icon message">
-					<i className="warning icon"></i>
-					<div className="content">
-						<div className="header">
-							Your search returned no results
-						</div>
-					</div>
-				</div>
-			);
-		} else {
-			return (
-				<div>
-					<table className="ui very basic table">
-						<thead>
-						<tr>
-							<th className="center aligned">ID</th>
-							<th className="center aligned">Owner</th>
-							<th className="center aligned">Name</th>
-							<th className="center aligned">Status</th>
-							<th className="center aligned">Actions</th>
-						</tr>
-						</thead>
-
-						<tbody>
-						{this.state.jobSummaries.map(renderJobSummary)}
-						</tbody>
-					</table>
-
-					<div style={{textAlign: "center"}}>
-						<button className="ui left attached button"
-										disabled={this.state.pageNum === 0}
-										onClick={this.onClickedPreviousPage.bind(this)}>
-							Newer Jobs
-						</button>
-						<button className="ui right attached button"
-										onClick={this.onClickedNextPage.bind(this)}>
-							Older Jobs
-						</button>
-					</div>
-				</div>
-			);
-		}
-	}
-
-	render() {
-		return (
-			<div>
-				<div className="ui fluid left icon input" style={{ marginBottom: "2em" }}>
-					<i className="search icon"></i>
-					<input type="text"
-								 id="jobs-search"
-								 placeholder="Search jobs..."
-								 onChange={this.onSearchChange.bind(this)}
-								 onKeyUp={this.onSearchKeyUp.bind(this)}
-								 value={this.state.queryInInputBar}
-								 autoFocus
-								 disabled={this.userHasNoJobs()} />
-				</div>
-
-				{this.renderJobSummaries()}
-
-				{this.state.loading ? <span>Loading...</span> : null}
 			</div>
 		);
 	}
 
-	componentWillUnmount() {
-		if (this.updateSubscription)
-			this.updateSubscription.unsubscribe();
+	renderNoResultsMessage() {
+		return (
+			<div className="ui negative icon message">
+				<i className="warning icon"></i>
+				<div className="content">
+					<div className="header">
+						Your search returned no results
+					</div>
+				</div>
+			</div>
+		);
+	}
+
+	renderJobSummaries() {
+		const renderJobSummary = this.renderJobSummary.bind(this);
+
+		return (
+			<div>
+				<table className="ui very basic table">
+					<thead>
+					<tr>
+						<th className="center aligned">ID</th>
+						<th className="center aligned">Owner</th>
+						<th className="center aligned">Name</th>
+						<th className="center aligned">Status</th>
+						<th className="center aligned">Actions</th>
+					</tr>
+					</thead>
+
+					<tbody>
+					{this.state.jobs.map(renderJobSummary)}
+					</tbody>
+				</table>
+
+				<div style={{textAlign: "center"}}>
+					<button className="ui left attached button"
+									disabled={this.state.page === 0}
+									onClick={this.onClickedPreviousPage.bind(this)}>
+						Newer Jobs
+					</button>
+					<button className="ui right attached button"
+									onClick={this.onClickedNextPage.bind(this)}>
+						Older Jobs
+					</button>
+				</div>
+			</div>
+		);
+	}
+
+	renderJobSummary(jobSummary, i) {
+		return (
+			<tr key={i}>
+				<td className="center aligned">
+					<Link to={"/jobs/" + jobSummary.id}>
+						<code>{jobSummary.id}</code>
+					</Link>
+				</td>
+				<td className="center aligned">
+					{jobSummary.owner}
+				</td>
+				<td className="center aligned">
+					{jobSummary.name}
+				</td>
+				<td className="center aligned">
+					{this.getLatestStatus(jobSummary.timestamps)}
+				</td>
+				<td className="center aligned">
+					{this.generateJobActions.bind(this)(jobSummary)}
+				</td>
+			</tr>
+		);
 	}
 }
