@@ -27,63 +27,87 @@ export class SubmitJobComponent extends React.Component {
 		super(props);
 
 		this.state = {
-			jobSpecSummariesLoaded: false,
-			jobSpecSummaries: [],
+			isLoadingJobSpecSummaries: true,
+			loadingError: null,
+			jobSpecSummaries: null,
 			selectedSpecId: undefined,
 		};
 	}
 
 	componentWillMount() {
+		this.loadJobSpecSummaries();
+	}
+
+	loadJobSpecSummaries() {
 		const params =
 			Helpers.extractParams(this.props.routeProps.location.search);
 
 		this.props.api.fetchJobSpecSummaries()
 			.then(jobSpecSummaries => {
 				this.setState({
-					jobSpecSummariesLoaded: true,
+					isLoadingJobSpecSummaries: false,
+					loadingError: null,
 					jobSpecSummaries: jobSpecSummaries,
 					selectedSpecId: params.spec || undefined,
+				});
+			})
+			.catch(apiError => {
+				this.setState({
+					isLoadingJobSpecSummaries: false,
+					loadingError: apiError,
+					jobSpecSummaries: null,
+					selectedSpecId: undefined,
 				});
 			});
 	}
 
-	onSelectSpecSummary(e) {
-		this.setState({
-			selectedSpecId: e.target.value,
-		});
+	render() {
+		if (this.state.isLoadingJobSpecSummaries)
+			return this.renderLoadingMessage();
+		else if (this.state.loadingError !== null)
+			return this.renderErrorMessage();
+		else if (this.state.jobSpecSummaries.length === 0)
+			return this.renderNoJobSpecsAvailableMessage();
+		else
+			return this.renderJobSubmissionUi();
 	}
 
-	renderJobSpecSummary(jobSpecSummary, i) {
+	renderLoadingMessage() {
+		return Helpers.renderLoadingMessage("job specs");
+	}
+
+	renderErrorMessage() {
+		return Helpers.renderErrorMessage(
+			"job specs",
+			this.state.loadingError,
+		  this.loadJobSpecSummaries.bind(this));
+	}
+
+	renderNoJobSpecsAvailableMessage() {
 		return (
-			<option key={i} value={jobSpecSummary.id}>
-				{jobSpecSummary.name}
-			</option>
+			<div className="ui info icon message">
+				<i className="info circle icon"></i>
+				<div className="content">
+					<div className="header">
+						No jobs yet!
+					</div>
+					<p>
+						The server doesn't appear to have any jobs you can submit.
+						This is probably because the server hasn't been configured
+						with any job specs yet. The server admin should add job specs
+						to this system (e.g. with <code>jobson generate spec</code>)
+					</p>
+				</div>
+			</div>
 		);
 	}
 
 	renderJobSubmissionUi() {
-		selectedSpec = this.state.jobSpecSummaries[0];
-		let selectedSpec;
-		if (this.state.selectedSpecId !== undefined) {
-			const maybeSelectedSpec =
-				this.state.jobSpecSummaries
-					.find(summary => summary.id === this.state.selectedSpecId);
-
-			if (maybeSelectedSpec !== undefined) {
-				selectedSpec = maybeSelectedSpec;
-			} else {
-				alert(`Cannot find a spec with id = ${this.state.selectedSpecId}. Defaulting to the first spec.`);
-				selectedSpec = this.state.jobSpecSummaries[0];
-			}
-		} else selectedSpec = this.state.jobSpecSummaries[0];
+		const selectedSpec = this.selectedSpec;
 
 		return (
 			<div className="ui form">
 				<h1>Submit Job</h1>
-
-				<h4 className="ui dividing header">
-					Job Spec Selection
-				</h4>
 
 				<div className="field">
 					<label htmlFor="job-spec">
@@ -92,14 +116,14 @@ export class SubmitJobComponent extends React.Component {
 					<select id="job-spec"
 									className="ui fluid dropdown"
 									value={this.state.selectedSpecId}
-									onChange={this.onSelectSpecSummary.bind(this)}>
+									onChange={this.onChangedSelectedSpec.bind(this)}>
 
 						{this.state.jobSpecSummaries.map(this.renderJobSpecSummary)}
 					</select>
 				</div>
 
 				<div className="ui info message">
-					<code>{selectedSpec.id}</code>: {selectedSpec.description}
+					{selectedSpec.description}
 				</div>
 
 				<h4 className="ui dividing header">
@@ -114,28 +138,32 @@ export class SubmitJobComponent extends React.Component {
 		);
 	}
 
-	render() {
-		if (this.state.jobSpecSummariesLoaded) {
-			if (this.state.jobSpecSummaries.length > 0) {
-				return this.renderJobSubmissionUi();
+	get selectedSpec() {
+		if (this.state.selectedSpecId !== undefined) {
+			const maybeSelectedSpec =
+				this.state.jobSpecSummaries
+					.find(summary => summary.id === this.state.selectedSpecId);
+
+			if (maybeSelectedSpec !== undefined) {
+				return maybeSelectedSpec;
 			} else {
-				return (
-				<div className="ui info icon message">
-					<i className="info circle icon"></i>
-					<div className="content">
-						<div className="header">
-							No jobs yet!
-						</div>
-						<p>
-							The server doesn't appear to have any jobs you can submit.
-							This is probably because the server hasn't been configured
-							with any job specs yet. The server admin should add job specs
-							to this system (e.g. with <code>jobson generate spec</code>)
-						</p>
-					</div>
-				</div>
-				);
+				alert(`Cannot find a spec with id = ${this.state.selectedSpecId}. Defaulting to the first spec.`);
+				return this.state.jobSpecSummaries[0];
 			}
-		} else return <em>Loading job specs</em>;
+		} else return this.state.jobSpecSummaries[0];
+	}
+
+	onChangedSelectedSpec(e) {
+		this.setState({
+			selectedSpecId: e.target.value,
+		});
+	}
+
+	renderJobSpecSummary(jobSpecSummary, i) {
+		return (
+			<option key={i} value={jobSpecSummary.id}>
+				{jobSpecSummary.name}
+			</option>
+		);
 	}
 }

@@ -18,7 +18,7 @@
  */
 
 import React from "react";
-import {StdioComponent} from "./StdioComponent"
+import {StdioComponent} from "./outputviewers/StdioComponent"
 import {Helpers} from "../Helpers";
 
 export class JobOutputsComponent extends React.Component {
@@ -26,59 +26,107 @@ export class JobOutputsComponent extends React.Component {
 	constructor() {
 		super();
 
+		this.jobChangesSubscription = null;
+
 		this.state = {
+			isLoadingJobOutputs: true,
+			loadingError: null,
 			jobOutputs: null,
-			jobOutputsLoaded: false,
 		};
 	}
 
 	componentWillMount() {
+		this.loadJobOutputs();
+		this.jobChangesSubscription =
+			this.props.jobChangesSubject.subscribe(
+				this.loadJobOutputs.bind(this));
+	}
+
+	componentWillUnmount() {
+		if (this.jobChangesSubscription !== null)
+			this.jobChangesSubscription.unsubscribe();
+	}
+
+	loadJobOutputs() {
 		this.props.api
 			.fetchJobOutputs(this.props.jobId)
 			.then(jobOutputs => {
-				this.setState({ jobOutputs: jobOutputs, jobOutputsLoaded: true });
+				this.setState({
+					isLoadingJobOutputs: false,
+					loadingError: null,
+					jobOutputs: jobOutputs,
+				});
+			})
+			.catch(apiError => {
+				this.setState({
+					isLoadingJobOutputs: false,
+					loadingError: apiError,
+					jobOutputs: null,
+				});
 			});
 	}
 
 	render() {
+		if (this.state.isLoadingJobOutputs)
+			return this.renderLoadingMessage();
+		else if (this.state.loadingError !== null)
+			return this.renderErrorMessage();
+		else
+			return this.renderOutputsUi();
+	}
 
-		if (this.state.jobOutputsLoaded) {
-			return (
-				<div>
-					{this.state.jobOutputsLoaded ? this.renderFileOutputs() : null }
-					{this.renderStdioComponent(
-						"stdout",
-						() => this.props.api.fetchJobStdout(this.props.jobId),
-						() => this.props.api.onJobStdoutUpdate(this.props.jobId))}
-					{this.renderStdioComponent(
-						"stderr",
-						() => this.props.api.fetchJobStderr(this.props.jobId),
-						() => this.props.api.onJobStderrUpdate(this.props.jobId))}
-				</div>
-			);
-		} else {
-			return <div>Loading job outputs</div>;
-		}
+	renderLoadingMessage() {
+		return Helpers.renderLoadingMessage("job outputs");
+	}
+
+	renderErrorMessage() {
+		return Helpers.renderErrorMessage(
+			"job outputs",
+			this.state.loadingError,
+			this.loadJobOutputs.bind(this));
+	}
+
+	renderOutputsUi() {
+		return (
+			<div>
+				{this.renderFileOutputs()}
+				{this.renderStdioOutput(
+					"stdout",
+					this.props.api.urlToGetJobStdout(this.props.jobId),
+					() => this.props.api.fetchJobStdout(this.props.jobId),
+					() => this.props.api.onJobStdoutUpdate(this.props.jobId))}
+				{this.renderStdioOutput(
+					"stderr",
+					this.props.api.urlToGetJobStderr(this.props.jobId),
+					() => this.props.api.fetchJobStderr(this.props.jobId),
+					() => this.props.api.onJobStderrUpdate(this.props.jobId))}
+			</div>
+		);
 	}
 
 	renderFileOutputs() {
 		return Object
 			.keys(this.state.jobOutputs)
-			.map(k => this.renderJobOutput(this.state.jobOutputs[k], k));
+			.map(k => this.renderFileOutput(this.state.jobOutputs[k], k));
 	}
 
-	renderJobOutput(jobOutput, key) {
-		return this.renderJobOutputComplete(key, API_PREFIX + jobOutput.href, null);
+	renderFileOutput(jobOutput, key) {
+		return this.renderJobOutput(
+			key,
+			this.props.api.buildAPIPathTo(jobOutput.href),
+			null);
 	}
 
-	renderStdioComponent(title, fetchStdio, onStdioUpdate) {
-		const viewer = <StdioComponent fetchStdio={fetchStdio} onStdioUpdate={onStdioUpdate} />;
-		return this.renderJobOutputComplete(title, API_PREFIX, viewer);
+	renderStdioOutput(title, href, fetchStdio, onStdioUpdate) {
+		const viewer = <StdioComponent fetchStdio={fetchStdio}
+																	 onStdioUpdate={onStdioUpdate} />;
+
+		return this.renderJobOutput(title, href, viewer);
 	}
 
-	renderJobOutputComplete(title, downloadHref, viewer) {
+	renderJobOutput(title, downloadHref, viewer) {
 		return (
-			<div className="ui grid jobson-condensed-grid">
+			<div className="ui grid jobson-condensed-grid" key={title}>
 				<div className="twelve wide column">
 					<h3 className="header">
 						{title}

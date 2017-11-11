@@ -19,7 +19,8 @@
 
 import React from "react";
 import Timestamp from "react-timestamp";
-import {Timeline, TimelineEvent} from 'react-event-timeline'
+import {Helpers} from "../Helpers";
+import {Timeline, TimelineEvent} from 'react-event-timeline';
 
 export class JobEventsComponent extends React.Component {
 
@@ -35,7 +36,9 @@ export class JobEventsComponent extends React.Component {
 		return (
 			<TimelineEvent title={`Status changed to ${timestamp.status}`}
 										 createdAt={<Timestamp time={timestamp.time} format='ago' />}
-			               icon={<i />}>
+			               icon={<i />}
+										 key={i}
+			               iconColor={Helpers.jobStatusColor(timestamp.status)}>
 				{timestamp.message}
 			</TimelineEvent>
 		);

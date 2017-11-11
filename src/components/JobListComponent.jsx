@@ -85,73 +85,18 @@ export class JobListComponent extends React.Component {
 		});
 	}
 
-	generateJobActions(jobSummary) {
-		const self = this;
-
-		return Object.keys(jobSummary._links)
-			.map((linkName, i) => {
-				switch (linkName) {
-					case "abort":
-						const href = jobSummary._links[linkName].href;
-						return (
-							<button className="ui tiny compact negative button"
-											key={i}
-											onClick={() => self.props.api.postEmptyRequestToHref(href)}>
-								Abort
-							</button>
-						);
-					case "details":
-						return (
-							<Link to={"/jobs/" + jobSummary.id}
-								 className="ui tiny compact button"
-								 key={i}>
-								View
-							</Link>
-						);
-					default:
-						return null;
-				}
-			})
-			.filter(el => el !== null);
-	}
-
 	getLatestStatus(timestamps) {
 		return timestamps[timestamps.length - 1].status;
 	}
 
-	renderJobSummary(jobSummary, i) {
-		return (
-			<tr key={i}>
-				<td className="center aligned">
-					<Link to={"/jobs/" + jobSummary.id}>
-						<code>{jobSummary.id}</code>
-					</Link>
-				</td>
-				<td className="center aligned">
-					{jobSummary.owner}
-				</td>
-				<td className="center aligned">
-					{jobSummary.name}
-				</td>
-				<td className="center aligned">
-					{Helpers.renderStatusField(
-						this.getLatestStatus(jobSummary.timestamps))}
-				</td>
-				<td className="center aligned">
-					{this.generateJobActions.bind(this)(jobSummary)}
-				</td>
-			</tr>
-		);
-	}
-
 	onSearchInputChange(e) {
-		this.setState({ queryInInputBar: e.target.value });
+		this.setState({ enteredQuery: e.target.value });
 	}
 
 	onSearchKeyUp(e) {
 		if (e.key === "Enter") {
-			if (this.state.queryInInputBar !== this.state.currentQuery) {
-				this.pushHistory(0, this.state.queryInInputBar);
+			if (this.state.enteredQuery !== this.state.activeQuery) {
+				this.pushHistory(0, this.state.enteredQuery);
 			}
 		}
 	}
@@ -188,6 +133,14 @@ export class JobListComponent extends React.Component {
 			this.state.page === 0;
 	}
 
+	isLoadingJobs() {
+		return this.state.isLoadingJobs;
+	}
+
+	errorLoadingJobs() {
+		return this.state.jobLoadingError !== null;
+	}
+
 
 	render() {
 		return (
@@ -200,7 +153,8 @@ export class JobListComponent extends React.Component {
 
 	renderSearchBar() {
 		return (
-			<div className="ui fluid left icon input" style={{ marginBottom: "2em" }}>
+			<div className={ "ui fluid left icon input " + (this.isLoadingJobs() ? "loading" : "") }
+					 style={{ marginBottom: "2em" }}>
 				<i className="search icon"></i>
 				<input type="text"
 							 id="jobs-search"
@@ -209,7 +163,7 @@ export class JobListComponent extends React.Component {
 							 onKeyUp={this.onSearchKeyUp.bind(this)}
 							 value={this.state.enteredQuery}
 							 autoFocus
-							 disabled={this.userHasNoJobs()} />
+							 disabled={this.userHasNoJobs() || this.isLoadingJobs() || this.errorLoadingJobs()} />
 			</div>
 		);
 	}
@@ -228,39 +182,14 @@ export class JobListComponent extends React.Component {
 	}
 
 	renderLoadingMessage() {
-		return (
-			<div className="ui icon message">
-				<i className="notched circle loading icon"></i>
-				<div className="content">
-					<div className="header">
-						Loading
-					</div>
-					<p>Fetching jobs from the Jobson API</p>
-				</div>
-			</div>
-		);
+		return Helpers.renderLoadingMessage("jobs");
 	}
 
 	renderLoadingErrorMessage() {
-		return (
-			<div className="ui negative icon message">
-				<i className="warning circle icon"></i>
-				<div className="content">
-					<div className="header">
-						Error Loading Jobs
-					</div>
-					<p>
-						There was an error loading jobs from the Jobson API.
-						The error message is: {this.state.jobLoadingError.message}.
-					</p>
-					<button className="ui primary icon button"
-					        onClick={this.updateJobList.bind(this)}>
-						<i className="refresh icon"></i>
-						Try Again
-					</button>
-				</div>
-			</div>
-		);
+		return Helpers.renderErrorMessage(
+			"jobs",
+			this.state.jobLoadingError,
+			this.updateJobList.bind);
 	}
 
 	renderUserHasNoJobsMessage() {
@@ -350,9 +279,39 @@ export class JobListComponent extends React.Component {
 						this.getLatestStatus(jobSummary.timestamps))}
 				</td>
 				<td className="center aligned">
-					{this.generateJobActions(jobSummary)}
+					{this.renderJobActions(jobSummary)}
 				</td>
 			</tr>
 		);
+	}
+
+	renderJobActions(jobSummary) {
+		const self = this;
+
+		return Object.keys(jobSummary._links)
+			.map((linkName, i) => {
+				switch (linkName) {
+					case "abort":
+						const href = jobSummary._links[linkName].href;
+						return (
+							<button className="ui tiny compact negative button"
+											key={i}
+											onClick={() => self.props.api.postEmptyRequestToHref(href)}>
+								Abort
+							</button>
+						);
+					case "details":
+						return (
+							<Link to={"/jobs/" + jobSummary.id}
+										className="ui tiny compact button"
+										key={i}>
+								View
+							</Link>
+						);
+					default:
+						return null;
+				}
+			})
+			.filter(el => el !== null);
 	}
 }

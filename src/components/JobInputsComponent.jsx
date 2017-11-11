@@ -21,50 +21,85 @@ import React from "react";
 import ReactJson from 'react-json-view';
 import {Helpers} from "../Helpers";
 
-// use the component in your app!
-
-
 export class JobInputsComponent extends React.Component {
 
 	constructor() {
 		super();
 
 		this.state = {
-			isLoading: true,
-			canBeRenderedInBrowser: false,
+			isLoadingJobInputs: true,
+			loadingError: null,
+			inputs: null,
 		};
 	}
 
 	componentWillMount() {
+		this.loadInputs();
+	}
+
+	loadInputs() {
 		this.props.api
 			.fetchJobInputs(this.props.jobId)
 			.then(inputs => {
-				const canBeRenderedInBrowser = JSON.stringify(inputs).length < 200000;
-				this.setState({inputs, isLoading: false, canBeRenderedInBrowser});
+				this.setState({
+					isLoadingJobInputs: false,
+					loadingError: null,
+					inputs: inputs,
+				});
+			})
+			.catch(apiError => {
+				this.setState({
+					isLoadingJobInputs: false,
+					loadingError: apiError,
+					inputs: null,
+				});
 			});
 	}
 
 	render() {
-		if (!this.state.isLoading) {
-			return (
-				<div className="ui grid jobson-condensed-grid">
-					<div className="twelve wide column">
-						<h3 className="header">
-							inputs.json
-						</h3>
-					</div>
-					<div className="four wide column">
-						{Helpers.renderDownloadButton(`${API_PREFIX}/v1/jobs/${this.props.jobId}/inputs`)}
-					</div>
+		if (this.state.isLoadingJobInputs)
+			return this.renderLoadingMessage();
+		else if (this.state.loadingError !== null)
+			return this.renderErrorMessage();
+		else
+			return this.renderInputs();
+	}
 
-					<div className="sixteen wide column">
-						{this.state.canBeRenderedInBrowser ?
-							this.renderJSONViewer() :
-							this.renderWarning()}
-					</div>
+	renderLoadingMessage() {
+		return Helpers.renderLoadingMessage("inputs");
+	}
+
+	renderErrorMessage() {
+		return Helpers.renderErrorMessage(
+			"inputs",
+			this.state.loadingError,
+			this.loadInputs.bind(this));
+	}
+
+	renderInputs() {
+		return (
+			<div className="ui grid jobson-condensed-grid">
+				<div className="twelve wide column">
+					<h3 className="header">
+						inputs
+					</h3>
 				</div>
-			);
-		} else return <div>Loading inputs</div>;
+				<div className="four wide column">
+					{Helpers.renderDownloadButton(
+						this.props.api.urlToGetJobInputs(this.props.jobId))}
+				</div>
+
+				<div className="sixteen wide column">
+					{this.canBeRenderedInABrowser(this.state.inputs) ?
+						this.renderJSONViewer() :
+						this.renderInputsTooBigToViewMessage()}
+				</div>
+			</div>
+		);
+	}
+
+	canBeRenderedInABrowser(inputs) {
+		return JSON.stringify(inputs).length < 200000;
 	}
 
 	renderJSONViewer() {
@@ -77,7 +112,7 @@ export class JobInputsComponent extends React.Component {
 		);
 	}
 
-	renderWarning() {
+	renderInputsTooBigToViewMessage() {
 		return (
 			<div className="ui icon warning message">
 				<i className="warning icon"></i>
@@ -90,7 +125,8 @@ export class JobInputsComponent extends React.Component {
 						You can try viewing them in with your own software by downloading
 						them.
 					</p>
-					{Helpers.renderDownloadButton(`${API_PREFIX}/v1/jobs/${this.props.jobId}/inputs`)}
+					{Helpers.renderDownloadButton(
+						this.props.api.urlToGetJobInputs(this.props.jobId))}
 				</div>
 			</div>
 		);
