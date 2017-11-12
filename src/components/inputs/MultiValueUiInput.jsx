@@ -22,94 +22,140 @@ import {Helpers} from "../../Helpers";
 
 export class MultiValueUiInput extends React.Component {
 
-  constructor(props) {
-    super(props);
+	constructor(props) {
+		super(props);
 
-    this.state = {
-      values: props.expectedInput.default || [],
-    };
-  }
+		this.state = {
+			values: props.expectedInput.default || [],
+		};
+	}
 
-  componentWillMount() {
-  	this.props.onValueChanged(this.asApiInput());
+	componentWillMount() {
+		this.props.onValueChanged(this.asApiInput());
 	}
 
 	asApiInput() {
 		return this.state.values;
 	}
 
-  onChange(e) {
-    this.setState({ values: e.target.value.split("\n") }, () => {
+
+	render() {
+		return (
+			<div>
+				{this.renderInput()}
+				{this.renderHelperButtons()}
+			</div>
+		);
+	}
+
+	renderInput() {
+		if (this.state.values.length > 500)
+			return this.renderHighPerformanceInput();
+		else
+			return this.renderInteractiveInput();
+	}
+
+	renderHighPerformanceInput() {
+		const values = this.state.values;
+		return (
+			<div className="ui message">
+				<div className="header">
+					{values.length} values
+				</div>
+				<ul>
+					<li>
+						First 5: {values.slice(0, 5).map(this.renderValueLabel)}
+					</li>
+					<li>
+						Last 5: {values.slice(values.length - 5).map(this.renderValueLabel)}
+					</li>
+				</ul>
+			</div>
+		);
+	}
+
+	renderValueLabel(value, i) {
+		return (
+			<div className="ui horizontal label"
+					 key={i}>
+				{value}
+			</div>
+		);
+	}
+
+	renderInteractiveInput() {
+		return (
+			<textarea value={this.state.values.join("\n")}
+								onChange={this.onChange.bind(this)}
+								placeholder="Entries separated by newlines"/>
+		);
+	}
+
+	onChange(e) {
+		const values = e.target.value.length > 0 ?
+			e.target.value.split("\n") : [];
+
+		this.setState({values}, () => {
 			this.props.onValueChanged(this.asApiInput());
 		});
-  }
-
-  onClickedFromFile() {
-  	Helpers.promptUserForFile("text/plain")
-			.then(Helpers.readFileAsText)
-			.then(text => text
-				.split(/\n|,/)
-				.map(entry => entry.trim())
-				.filter(entry => entry.length > 0))
-			.then(values => {
-				this.setState({values}, () => {
-					this.props.onValueChanged(this.asApiInput());
-				});
-			});
 	}
 
-	onClickedClear() {
-  	this.setState({ values: [] }, () => {
-  		this.props.onValueChanged(this.asApiInput());
-		});
-	}
-
-	onClickedDownload() {
-  	const payload = [this.state.values.join("\n")];
-  	const data = new Blob(payload, {type: "text/plain"});
-
-  	Helpers.promptUserToDownload(data, "values.txt");
-	}
-
-  renderHelperButtons() {
-  	return (
-  		<div className="btn-bar">
-				<button className="ui icon button"
-								onClick={this.onClickedFromFile.bind(this)}>
+	renderHelperButtons() {
+		return (
+			<div className="ui buttons">
+				<button className="ui basic icon button"
+								onClick={this.onClickImportValuesFromFile.bind(this)}>
 					<i className="upload icon"></i>
-					From File
+					Import
 				</button>
 
-				<button className="ui icon button"
-								onClick={this.onClickedDownload.bind(this)}
-				        disabled={this.state.values.length === 0}>
+				<button className="ui basic icon button"
+								onClick={this.onClickDownloadValues.bind(this)}
+								disabled={this.state.values.length === 0}>
 					<i className="download icon"></i>
 					Download
 				</button>
 
-				<button className="ui button"
-								onClick={this.onClickedClear.bind(this)}
+				<button className="ui basic icon button"
+								onClick={this.onClickClearValues.bind(this)}
 								disabled={this.state.values.length === 0}>
+					<i className="remove icon"></i>
 					Clear
 				</button>
 			</div>
 		);
 	}
 
-	renderInput() {
-		return this.state.values.length > 10 ?
-			<span>{this.state.values.length} values</span> : // Prevents DOM locking from rendering too many vals.
-			<textarea value={this.state.values.join("\n")}
-								onChange={this.onChange.bind(this)}
-			          placeholder="Entries separated by newlines" />;
+	onClickImportValuesFromFile() {
+		Helpers.promptUserForFile("text/plain")
+			.then(Helpers.readFileAsText)
+			.then(text => text
+				.split(/\n|,/)
+				.map(entry => entry.trim())
+				.filter(entry => entry.length > 0))
+			.then(importedValues => {
+				const newValues =
+					this.state.values.concat(importedValues);
+
+				this.setState({values: newValues}, () => {
+					this.props.onValueChanged(this.asApiInput());
+				});
+			})
+			.catch(() => {
+				// User cancelled out of dialog: do nothing.
+			});
 	}
 
-  render() {
-  	return (
-  		<div className="multivalue-input">
-				{this.renderInput()}
-				{this.renderHelperButtons()}
-			</div>
-		);
-  }
+	onClickDownloadValues() {
+		const payload = [this.state.values.join("\n")];
+		const data = new Blob(payload, {type: "text/plain"});
+
+		Helpers.promptUserToDownload(data, "values.txt");
+	}
+
+	onClickClearValues() {
+		this.setState({values: []}, () => {
+			this.props.onValueChanged(this.asApiInput());
+		});
+	}
 }
