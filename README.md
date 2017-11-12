@@ -2,15 +2,20 @@
 
 A web frontend for [Jobson](https://github.com/adamkewley/jobson).
 
-[Jobson](https://github.com/adamkewley/jobson) lets developers share
-command-line applications over the web without modification. It does
-so by providing an abstraction layer over process forking, HTTP API
-generation, standard IO, and websockets.
+#### Demo Video (click to view):
+[![Jobson UI 0.0.1 demo](https://img.youtube.com/vi/Fq0_T-offgA/0.jpg)](https://www.youtube.com/watch?v=Fq0_T-offgA)
 
-This project is a web-frontend that uses all major features of the
-Jobson API. Combined with Jobson, you get a web stack (UI, auth, API,
-execution, and persistence) for the price of writing a job spec and
-deploying a standard web stack.
+
+## Features
+
+- Exercises all major features of the [Jobson](https://github.com/adamkewley/jobson) 
+  API
+- In-browser authentication
+- Searchable job list
+- Job submission form that is automatically generated from 
+  [Jobson](https://github.com/adamkewley/jobson) job specs
+- View job outputs and events in realtime
+- View outputs in the browser
 
 
 # Build
