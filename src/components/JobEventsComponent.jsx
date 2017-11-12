@@ -18,45 +18,29 @@
  */
 
 import React from "react";
+import Timestamp from "react-timestamp";
+import {Helpers} from "../Helpers";
+import {Timeline, TimelineEvent} from 'react-event-timeline';
 
-export class TextUiInput extends React.Component {
-
-	constructor(props) {
-		super(props);
-
-		this.state = {
-			value: this.chooseDefaultSelection(props),
-		};
-	}
-
-	chooseDefaultSelection(props) {
-		return props.expectedInput.default ? props.expectedInput.default : "";
-	}
-
-	componentWillMount() {
-		this.props.onValueChanged(this.state.value);
-	}
-
-	componentWillReceiveProps(newProps) {
-		this.setState({value: this.chooseDefaultSelection(newProps)}, () => {
-			this.props.onValueChanged(this.state.value);
-		});
-	}
-
-	onChange(e) {
-		this.setState({value: e.target.value}, () => {
-			this.props.onValueChanged(this.asApiInput());
-		});
-	}
+export class JobEventsComponent extends React.Component {
 
 	render() {
 		return (
-			<div className="ui fluid input">
-				<input type="text"
-							 id={ "expected-input_" + this.props.expectedInput.id}
-							 value={this.state.value}
-							 onChange={this.onChange.bind(this)} />
-			</div>
+			<Timeline>
+				{this.props.timestamps.map(this.renderTimestamp)}
+			</Timeline>
+		);
+	}
+
+	renderTimestamp(timestamp, i) {
+		return (
+			<TimelineEvent title={`Status changed to ${timestamp.status}`}
+										 createdAt={<Timestamp time={timestamp.time} format='ago' />}
+			               icon={<i />}
+										 key={i}
+			               iconColor={Helpers.jobStatusColor(timestamp.status)}>
+				{timestamp.message}
+			</TimelineEvent>
 		);
 	}
 }

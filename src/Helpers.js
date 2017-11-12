@@ -17,6 +17,9 @@
  * under the License.
  */
 
+import React from "react";
+import { Subject } from "rxjs";
+
 export class Helpers {
 
 	static promptUserToDownloadAsJSON(obj) {
@@ -61,22 +64,6 @@ export class Helpers {
 		return obj;
 	}
 
-	static setUnion(a, b) {
-		var union = new Set(a);
-		for (var elem of b) {
-			union.add(elem);
-		}
-		return union;
-	}
-
-	static setDifference(a, b) {
-		var difference = new Set(a);
-		for (var elem of b) {
-			difference.delete(elem);
-		}
-		return difference;
-	}
-
 	static promptUserForFiles(mimeTypes = "", allowMultipleFiles = true) {
 
 		return new Promise((resolve, reject) => {
@@ -116,6 +103,18 @@ export class Helpers {
 
 			document.body.removeChild(fileInputEl);
 		});
+	}
+
+	static createObservableSocket(url) {
+		const ws = new WebSocket(url);
+
+		const subject = new Subject();
+
+		ws.onmessage = (e) => subject.next(e);
+		ws.onclose = (e) => subject.complete();
+		ws.onerror = (e) => subject.error(e);
+
+		return subject;
 	}
 
 	static promptUserForFile(mimeTypes = "") {
@@ -163,6 +162,88 @@ export class Helpers {
 		} else {
 			return prefix + window.location.pathname + "/" + p;
 		}
+	}
+
+	static renderStatusField(status) {
+		switch (status) {
+			case "aborted":
+				return <div className="ui orange horizontal basic label">{status}</div>;
+			case "fatal-error":
+				return <div className="ui red horizontal basic label">{status}</div>;
+			case "finished":
+				return <div className="ui green horizontal basic label">{status}</div>;
+			case "running":
+				return <div className="ui horizontal basic label">
+					<div className="ui tiny active inline loader"></div> Running
+				</div>;
+			default:
+				return <div className="ui horizontal basic label">{status}</div>;
+		}
+	}
+
+	static renderDownloadButton(href) {
+		return (
+			<a className="ui right floated primary button"
+				 href={href}>
+				<i className="download icon"></i>
+				Download
+			</a>
+		);
+	}
+
+	static jobStatusColor(jobStatus) {
+		switch (jobStatus) {
+			case "submitted":
+				return "grey";
+			case "fatal-error":
+				return "red";
+			case "finished":
+				return "green";
+			case "running":
+				return "grey";
+			case "aborted":
+				return "orange";
+			default:
+				return "grey";
+		}
+	}
+
+	static renderLoadingMessage(noun) {
+		return (
+			<div className="ui icon message">
+				<i className="notched circle loading icon"></i>
+				<div className="content">
+					<div className="header">
+						Loading
+					</div>
+					<p>
+						Fetching {noun} from the Jobson API.
+					</p>
+				</div>
+			</div>
+		);
+	}
+
+	static renderErrorMessage(noun, apiError, retryCallback) {
+		return (
+			<div className="ui negative icon message">
+				<i className="warning circle icon"></i>
+				<div className="content">
+					<div className="header">
+						Error loading {noun}
+					</div>
+					<p>
+						There was an error loading {noun} from the Jobson API.
+						The API's error message was: {apiError.message}.
+					</p>
+					<button className="ui primary icon button"
+									onClick={retryCallback}>
+						<i className="refresh icon"></i>
+						Try Again
+					</button>
+				</div>
+			</div>
+		);
 	}
 }
 

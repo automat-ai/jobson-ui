@@ -18,14 +18,14 @@
  */
 
 import React from 'react';
-import '../../styles/index.scss';
 import {HttpService} from "../HttpService";
 import {JobsonAPI} from "../JobsonAPI";
 import {JobListComponent} from "./JobListComponent";
 import {SubmitJobComponent} from "./SubmitJobComponent";
 import {JobDetailsComponent} from "./JobDetailsComponent";
-import {Switch, Route, Link, Redirect} from "react-router-dom";
+import {Switch, Route, Redirect} from "react-router-dom";
 import {AboutComponent} from "./AboutComponent";
+import {NavbarComponent} from "./NavbarComponent";
 
 export default class AppComponent extends React.Component {
 
@@ -39,7 +39,6 @@ export default class AppComponent extends React.Component {
 			httpService: httpService,
 			api: api,
 			requests: [],
-			username: "Loading...",
 		};
 	}
 
@@ -47,10 +46,6 @@ export default class AppComponent extends React.Component {
 		this.state.httpService.onRequestsChanged.subscribe(requests => {
 			this.setState({ requests: requests });
 		});
-
-		this.state.api.fetchCurrentUser().then(userId => {
-			this.setState({ username: userId });
-		})
 	}
 
 	render() {
@@ -62,37 +57,54 @@ export default class AppComponent extends React.Component {
 
 				<div id="root-container">
 					<div>
-						<div id="navbar">
-							<span id="title">Jobson</span>
+						<NavbarComponent api={this.state.api} />
 
-							<nav>
-								<Link to="/jobs">Jobs</Link>
-								<Link to="/submit">Submit Job</Link>
-							</nav>
+						{this.renderMain()}
 
-							<div className="navbar-right">
-						<span id="navbar-username">
-							{this.state.username}
-						</span>
+						{this.renderFooter()}
+					</div>
+				</div>
+			</div>
+		);
+	}
+
+	renderMain() {
+		return (
+			<main className="ui container" style={{marginBottom: "1em"}}>
+				<Switch>
+					<Route path="/submit"
+								 render={props => <SubmitJobComponent api={this.state.api} routeProps={props} />}/>
+					<Route path="/jobs/:id"
+								 render={props => <JobDetailsComponent params={props.match.params} api={this.state.api}/>}/>
+					<Route path="/jobs"
+								 render={props => <JobListComponent api={this.state.api} routeProps={props} />}/>
+					<Route path="/about" component={AboutComponent} />
+					<Redirect from={"/"} to={"/jobs"} />
+				</Switch>
+			</main>
+		);
+	}
+
+	renderFooter() {
+		return (
+			<div className="ui inverted vertical footer segment">
+				<div className="ui container">
+					<div className="ui stackable inverted divided equal height stackable grid">
+						<div className="ten wide column">
+							<h4 className="ui inverted header">Jobson UI</h4>
+							<p>
+								An open-source (Apache v2) project that webifies command-line
+								applications.
+							</p>
+						</div>
+						<div className="six wide column">
+							<div className="ui inverted link list">
+								<a className="item" href="https://github.com/adamkewley/jobson-ui">Jobson UI Source Code</a>
+								<a className="item" href="https://github.com/adamkewley/jobson-ui/releases">Jobson UI Releases</a>
+								<a className="item" href="https://github.com/adamkewley/jobson">Jobson Source Code</a>
+								<a className="item" href="https://github.com/adamkewley/jobson/releases">Jobson Releases</a>
 							</div>
 						</div>
-
-						<main>
-							<Switch>
-								<Route path="/submit"
-											 render={props => <SubmitJobComponent api={this.state.api} routeProps={props} />}/>
-								<Route path="/jobs/:id"
-											 render={props => <JobDetailsComponent params={props.match.params} api={this.state.api}/>}/>
-								<Route path="/jobs"
-											 render={props => <JobListComponent api={this.state.api} routeProps={props} />}/>
-								<Route path="/about" component={AboutComponent} />
-								<Redirect from={"/"} to={"/jobs"} />
-							</Switch>
-						</main>
-
-						<footer>
-							<Link to={"/about"}>about</Link>
-						</footer>
 					</div>
 				</div>
 			</div>

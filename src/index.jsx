@@ -22,6 +22,8 @@ import { render } from 'react-dom';
 import { AppContainer } from 'react-hot-loader';
 import AppComponent from './components/AppComponent';
 import { HashRouter } from "react-router-dom";
+import "../styles/index.scss";
+import "semantic-ui-css/semantic.css";
 
 render(
   <AppContainer>

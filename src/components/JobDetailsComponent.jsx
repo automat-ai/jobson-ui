@@ -18,121 +18,220 @@
  */
 
 import React from "react";
-import {StdioComponent} from "./StdioComponent";
+
 import {Link} from "react-router-dom";
+import Timestamp from "react-timestamp";
+import {Helpers} from "../Helpers";
+import {JobOutputsComponent} from "./JobOutputsComponent";
+import {JobEventsComponent} from "./JobEventsComponent";
+import {JobInputsComponent} from "./JobInputsComponent";
 
 export class JobDetailsComponent extends React.Component {
 
 	constructor() {
 		super();
+
+		this.updateSubscription = null;
+
 		this.state = {
-			jobLoaded: false,
+			isLoadingJob: true,
+			loadingError: null,
 			job: null,
-			outputsLoaded: false,
-			outputs: null,
+			activeTab: "Outputs",
+			jobChangesSubject: null,
 		};
+	}
+
+	componentWillMount() {
+		this.updateUi();
+
+		const jobChangesSubject =
+			this.props.api.onAllJobStatusChanges();
+
+		this.setState({jobChangesSubject});
+
+		this.updateSubscription =
+			jobChangesSubject.subscribe(this.updateUi.bind(this));
 	}
 
 	updateUi() {
 		this.props.api
 			.fetchJobDetailsById(this.props.params.id)
 			.then(job => {
-				this.setState({jobLoaded: true, job: job});
+				this.setState({
+					isLoadingJob: false,
+					loadingError: null,
+					job: job
+				});
 			})
-			.then(() => this.props.api.fetchJobOutputs(this.props.params.id))
-			.then(outputs => {
-				this.setState({outputsLoaded: true, outputs: outputs});
-			})
-	}
-
-	componentWillMount() {
-		this.updateUi();
-
-		this.updateSubscription = this.props.api
-			.onAllJobStatusChanges()
-			.subscribe(() => this.updateUi());
-	}
-
-	renderStatusChange(statusChange, i) {
-		return (
-			<li key={i}>
-				{statusChange.time} - {statusChange.status} - {statusChange.message}
-			</li>
-		);
-	}
-
-	getLatestStatus() {
-		return this.state.job.timestamps[this.state.job.timestamps.length - 1].status;
-	}
-
-	renderJobOutput(jobOutput, key) {
-		return (
-			<li key={key}>
-				<a href={API_PREFIX + jobOutput.href}>{key}</a>
-			</li>
-		);
-	}
-
-	renderOutputs() {
-		return Object
-			.keys(this.state.outputs)
-			.map(k => this.renderJobOutput(this.state.outputs[k], k));
-	}
-
-	render() {
-		return this.state.jobLoaded ?
-			(
-				<div id="job-details">
-					<h1><Link to="/jobs">jobs</Link> / {this.state.job.id}</h1>
-					<div>
-						<span className="prop-name">
-							Created by
-						</span>
-						<span className="prop-value">
-							{this.state.job.owner}
-						</span>
-
-						<span className="prop-name">
-							Name
-						</span>
-						<span className="prop-value">
-							{this.state.job.name}
-						</span>
-
-						<span className="prop-name">
-							Status
-						</span>
-						<span className="prop-value">
-							{this.getLatestStatus()}
-						</span>
-					</div>
-
-					<ul>
-						{this.state.job.timestamps.map(this.renderStatusChange)}
-					</ul>
-
-					<h2>Outputs</h2>
-					<ul>
-						{this.state.outputsLoaded ? this.renderOutputs() : null }
-					</ul>
-
-					<h2>Stdout</h2>
-					<StdioComponent
-						fetchStdio={() => this.props.api.fetchJobStdout(this.state.job.id)}
-						onStdioUpdate={() => this.props.api.onJobStdoutUpdate(this.state.job.id)}/>
-
-					<h2>Stderr</h2>
-					<StdioComponent
-						fetchStdio={() => this.props.api.fetchJobStderr(this.state.job.id)}
-						onStdioUpdate={() => this.props.api.onJobStderrUpdate(this.state.job.id)}/>
-				</div>
-			) :
-			(
-				<h1>{this.props.params.id} not loaded</h1>
-			);
+			.catch(apiError => {
+				this.setState({
+					isLoadingJob: false,
+					loadingError: apiError,
+					job: null,
+				});
+			});
 	}
 
 	componentWillUnmount() {
-		this.updateSubscription.unsubscribe();
+		if (this.updateSubscription !== null)
+			this.updateSubscription.unsubscribe();
+	}
+
+	render() {
+		return (
+			<div>
+				{this.renderHeader()}
+				{this.tryRenderMain()}
+			</div>
+		);
+	}
+
+	renderHeader() {
+		return (
+			<div className="segment">
+				<div className="ui breadcrumb">
+					<Link to="/jobs" className="section">
+						jobs
+					</Link>
+					<div className="divider">
+						/
+					</div>
+					<div className="active section">
+						<h1>
+							{this.props.params.id}
+						</h1>
+					</div>
+				</div>
+			</div>
+		);
+	}
+
+	tryRenderMain() {
+		if (this.state.isLoadingJob)
+			return this.renderJobLoadingMessage();
+		else if (this.state.loadingError !== null)
+			return this.renderErrorMessage();
+		else
+			return this.renderJobDetailsUi();
+	}
+
+	renderJobLoadingMessage() {
+		return Helpers.renderLoadingMessage("job details");
+	}
+
+	renderErrorMessage() {
+		return Helpers.renderErrorMessage(
+			"job details",
+			this.state.loadingError,
+			this.updateUi.bind(this));
+	}
+
+	renderJobDetailsUi() {
+		return (
+			<div>
+				<div className="ui segment">
+					<div className="ui horizontal list">
+						{Object
+							.keys(this.detailHeaders)
+							.map(k => this.renderDetailHeader(
+								k,
+								this.detailHeaders[k]))}
+
+					</div>
+				</div>
+
+				<div className="ui top tabular menu">
+					{this.renderTabHeaders()}
+				</div>
+
+				<div style={{marginBottom: "2em"}}>
+					{this.tabs[this.state.activeTab].call()}
+				</div>
+			</div>
+		);
+	}
+
+
+	get detailHeaders() {
+		return {
+			"Job Name": () => this.state.job.name,
+			"Created by": () => this.state.job.owner,
+			"Submitted": () => {
+				return <Timestamp time={this.state.job.timestamps[0].time} format='ago' />;
+			},
+			"Latest Status": () => {
+				return (
+					<div>
+						{Helpers.renderStatusField(this.getLatestStatus().status)}
+						(<Timestamp time={this.getLatestStatus().time} format='ago' />)
+					</div>
+				);
+			},
+		};
+	}
+
+	getLatestStatus() {
+		return this.state.job.timestamps[this.state.job.timestamps.length - 1];
+	}
+
+	renderDetailHeader(header, renderer) {
+		return (
+			<div className="item" key={header}>
+				<div className="content">
+					<div className="header">
+						{header}
+					</div>
+					{renderer.call(this)}
+				</div>
+			</div>
+		);
+	}
+
+	get tabs() {
+		return {
+			"Inputs": () => {
+				return (
+					<JobInputsComponent jobId={this.props.params.id}
+															api={this.props.api} />
+				);
+			},
+			"Outputs": () => {
+				return (
+					<JobOutputsComponent jobChangesSubject={this.state.jobChangesSubject}
+															 jobId={this.props.params.id}
+															 api={this.props.api} />
+				);
+			},
+			"Events": () => {
+				return (
+					<JobEventsComponent timestamps={this.state.job.timestamps} />
+				);
+			},
+		};
+	}
+
+	renderTabHeaders() {
+		return Object.keys(this.tabs).map(header => {
+			if (header === this.state.activeTab) {
+				return (
+					<a className="item active" key={header}>
+						{header}
+					</a>
+				);
+			} else {
+				return (
+					<a className="item"
+						 key={header}
+						 onClick={this.setActiveTab.bind(this, header)}>
+						{header}
+					</a>
+				);
+			}
+		});
+	}
+
+	setActiveTab(activeTab) {
+		this.setState({activeTab});
 	}
 }

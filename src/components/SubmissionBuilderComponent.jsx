@@ -30,55 +30,72 @@ export class SubmissionBuilderComponent extends React.Component {
 		string: TextUiInput,
 		select: SelectUiInput,
 		"string[]": MultiValueUiInput,
-		sql: SqlUiInput
+		sql: SqlUiInput,
 	};
-
 
 
 	constructor() {
 		super();
 
 		this.state = {
-			specLoaded: false,
+			specLoading: true,
+			loadingError: null,
 			spec: null,
 			expectedInputComponents: null,
 			jobName: "default",
 			inputs: {},
-			errorMessage: "",
+			validationErrorMessage: "",
 		};
 	}
 
-
-
 	componentWillMount() {
-		this.fetchSpec(this.props.specId);
+		this.tryLoadSpec(this.props.specId);
+	}
+
+	tryLoadSpec(specId) {
+		const createExpectedInputComponent = this.createUiInput.bind(this);
+
+		this.props.api
+			.fetchJobSpec(specId)
+			.then(jobSpec => {
+				const expectedInputComponents =
+					jobSpec.expectedInputs.map(createExpectedInputComponent);
+
+				this.setState({
+					specLoading: false,
+					loadingError: null,
+					spec: jobSpec,
+					expectedInputComponents: expectedInputComponents,
+					inputs: {},
+					validationErrorMessage: "",
+				});
+			})
+			.catch(apiError => {
+				this.setState({
+					specLoading: false,
+					loadingError: apiError,
+					spec: null,
+					expectedInputComponents: null,
+					inputs: {},
+					validationErrorMessage: "",
+				});
+			});
 	}
 
 	componentWillReceiveProps(props) {
 		if (props.specId !== this.props.specId) {
 			this.setState({
-				specLoaded: false,
+				specLoading: true,
+				loadingError: null,
 				spec: null,
 				expectedInputComponents: null,
 				jobName: "default",
 				inputs: {},
-			}, () => this.fetchSpec(props.specId));
-		}
-	}
-
-	fetchSpec(specId) {
-		const createExpectedInputComponent = this.createUiInput.bind(this);
-
-		this.props.api.fetchJobSpec(specId).then(jobSpec => {
-			const expectedInputComponents =
-				jobSpec.expectedInputs.map(createExpectedInputComponent);
-
-			this.setState({
-				specLoaded: true,
-				spec: jobSpec,
-				expectedInputComponents: expectedInputComponents,
+				validationErrorMessage: "",
+			}, () => {
+				this.tryLoadSpec(props.specId)
 			});
-		});
+		}
 	}
 
 	submitJob() {
@@ -89,7 +106,7 @@ export class SubmissionBuilderComponent extends React.Component {
 				this.props.routeProps.history.push(`/jobs/${resp.id}`);
 			})
 			.catch(err => {
-				this.setState({ errorMessage: err.message });
+				this.setState({ validationErrorMessage: err.message });
 			});
 	}
 
@@ -105,44 +122,91 @@ export class SubmissionBuilderComponent extends React.Component {
 		this.setState({jobName: e.target.value});
 	}
 
-	downloadRequest() {
+	downloadBuiltSubmission() {
 		Helpers.promptUserToDownloadAsJSON(this.generateJobRequest());
 	}
 
 	render() {
-		return this.state.specLoaded ?
-			(
+		if (this.state.specLoading)
+			return this.renderLoadingMessage();
+		else if (this.state.loadingError !== null)
+			return this.renderErrorMessage();
+		else
+			return this.renderUi();
+	}
+
+	renderLoadingMessage() {
+		return Helpers.renderLoadingMessage("job spec");
+	}
+
+	renderErrorMessage() {
+		return Helpers.renderErrorMessage(
+			"job spec",
+			this.state.loadingError,
+			this.tryLoadSpec.bind(this, this.props.specId));
+	}
+
+	renderUi() {
+		return (
+			<div>
+				{this.renderValidationErrors()}
+				{this.renderJobsonExpectedInputs()}
+				{this.renderJobSpecExpectedInputs()}
+				{this.renderSubmissionButtons()}
+			</div>
+		);
+	}
+
+	renderValidationErrors() {
+		if (this.state.validationErrorMessage.length > 0) {
+			return (
+				<div className="error-banner">
+					{this.state.validationErrorMessage}
+				</div>
+			);
+		} else {
+			return null;
+		}
+	}
+
+	renderJobsonExpectedInputs() {
+		return (
+			<div className="field">
+				<label htmlFor="job-name">
+					Job Name
+				</label>
+				<div className="ui fluid input">
+					<input type="text"
+								 id="job-name"
+								 placeholder="Job Name"
+								 value={this.state.jobName}
+								 className="ui fluid input"
+								 onChange={this.updateJobName.bind(this)} />
+				</div>
+			</div>
+		);
+	}
+
+	renderJobSpecExpectedInputs() {
+		return this.state.expectedInputComponents;
+	}
+
+	renderSubmissionButtons() {
+		return (
+			<div style={{marginTop: "1em", textAlign: "center"}}>
 				<div>
-					{this.state.errorMessage.length > 0 ?
-						<div className="error-banner">
-							{this.state.errorMessage}
-						</div> : null}
-
-					<div className="expected-input">
-						<label htmlFor="job-name">Job Name</label>
-						<input type="text"
-									 id="job-name"
-									 placeholder="Job Name"
-									 value={this.state.jobName}
-									 onChange={this.updateJobName.bind(this)}/>
-					</div>
-
-					<div>
-						{this.state.expectedInputComponents}
-					</div>
-
-					<button id="submit-btn"
+					<button className="ui primary button"
 									onClick={this.submitJob.bind(this)}>
 						Submit Job
 					</button>
-
-					<button id="download-btn"
-									onClick={this.downloadRequest.bind(this)}>
-						Download Request (debug)
-					</button>
 				</div>
-			) :
-			<span>Loading spec</span>;
+
+				<button className="ui tiny button"
+								onClick={this.downloadBuiltSubmission.bind(this)}>
+					Download Request (debug)
+				</button>
+			</div>
+		);
 	}
 
 	createUiInput(expectedInput) {
@@ -165,12 +229,18 @@ export class SubmissionBuilderComponent extends React.Component {
 		const inputComponent = React.createElement(componentCtor, componentProps, null);
 
 		return (
-			<div className="expected-input" key={expectedInput.id}>
-				<label htmlFor={expectedInput.id}>{expectedInput.name}</label>
-				<div className="input-description">
-					{expectedInput.description}
-				</div>
+			<div className="field" key={expectedInput.id}>
+				<label htmlFor={"expected-input_" + expectedInput.id}>{expectedInput.name}</label>
+				{expectedInput.description ? this.renderDescription(expectedInput) : null}
 				{inputComponent}
+			</div>
+		);
+	}
+
+	renderDescription(expectedInput) {
+		return (
+			<div>
+				{expectedInput.description}
 			</div>
 		);
 	}
