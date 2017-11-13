@@ -29,6 +29,10 @@ export class TextUiInput extends React.Component {
 		};
 	}
 
+	asApiInput() {
+		return this.state.value;
+	}
+
 	chooseDefaultSelection(props) {
 		return props.expectedInput.default ? props.expectedInput.default : "";
 	}
