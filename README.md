@@ -1,9 +1,8 @@
 # Jobson UI
 
-A web frontend for [Jobson](https://github.com/adamkewley/jobson).
+Video explanation:
 
-#### Demo Video (click to view):
-[![Jobson UI 0.0.1 demo](https://img.youtube.com/vi/Fq0_T-offgA/0.jpg)](https://www.youtube.com/watch?v=Fq0_T-offgA)
+[![Jobson Screencast](https://img.youtube.com/vi/W9yfpqWiyUg/0.jpg)](https://www.youtube.com/watch?v=W9yfpqWiyUg)
 
 
 ## Features
