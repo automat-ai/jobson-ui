@@ -20,7 +20,7 @@ A web frontend for [Jobson](https://github.com/adamkewley/jobson).
 
 # Build
 
-Jobson-UI is built using `node v6.11.4` and `npm 3.10.10`:
+Jobson-UI was built using `node v6.11.4` and `npm 3.10.10`:
 
 ```bash
 npm install
@@ -76,7 +76,7 @@ http {
 
         location /api {
             # A Jobson server running locally on port 8080
-            proxy_pass localhost:8080;
+            proxy_pass http://localhost:8080;
 
             # The Jobson server doesn't use a prefix
             rewrite ^/api/(.*) /$1 break;

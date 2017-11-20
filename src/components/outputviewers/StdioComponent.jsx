@@ -59,11 +59,20 @@ export class StdioComponent extends React.Component {
 				});
 			})
 			.catch(apiError => {
-				this.setState({
-					isLoading: false,
-					loadingError: apiError,
-					content: "",
-				});
+				if (apiError.code === 404) {
+					// It may not have been written to yet.
+					this.setState({
+						isLoading: false,
+						loadingError: null,
+						content: "",
+					});
+				} else {
+					this.setState({
+						isLoading: false,
+						loadingError: apiError,
+						content: "",
+					});
+				}
 			});
 	}
 
@@ -123,14 +132,14 @@ export class StdioComponent extends React.Component {
 	}
 
 	renderLoadingMessage() {
-		return Helpers.renderLoadingMessage("loading data");
+		return Helpers.renderLoadingMessage("output");
 	}
 
 	renderErrorMessage() {
 		return Helpers.renderErrorMessage(
-			"loading data",
+			"output",
 			this.state.loadingError,
-			this.loadDataAndSubscribeToUpdates());
+			this.loadDataAndSubscribeToUpdates.bind(this));
 	}
 
 	renderEmptyDataMessage() {

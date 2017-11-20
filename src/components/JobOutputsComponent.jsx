@@ -105,32 +105,45 @@ export class JobOutputsComponent extends React.Component {
 	}
 
 	renderFileOutputs() {
-		return Object
-			.keys(this.state.jobOutputs)
-			.map(k => this.renderFileOutput(this.state.jobOutputs[k], k));
+		return this.state.jobOutputs.map((output, i) => {
+			return this.renderFileOutput(output, i);
+		});
 	}
 
 	renderFileOutput(jobOutput, key) {
-		return this.renderJobOutput(
-			key,
-			this.props.api.buildAPIPathTo(jobOutput.href),
-			null);
+		const viewer =
+			(jobOutput.metadata && jobOutput.metadata.embed) ?
+				<embed className="ui image" src={this.props.api.buildAPIPathTo(jobOutput.href)} /> :
+				null;
+
+		return this.renderJobOutput({
+			title: jobOutput.name || jobOutput.id,
+			description: jobOutput.description || null,
+			downloadHref: this.props.api.buildAPIPathTo(jobOutput.href),
+			viewer: viewer,
+		});
 	}
 
 	renderStdioOutput(title, href, fetchStdio, onStdioUpdate) {
-		const viewer = <StdioComponent fetchStdio={fetchStdio}
+		const stdioViewer = <StdioComponent fetchStdio={fetchStdio}
 																	 onStdioUpdate={onStdioUpdate} />;
 
-		return this.renderJobOutput(title, href, viewer);
+		return this.renderJobOutput({
+			title: title,
+			description: null,
+			downloadHref: href,
+			viewer: stdioViewer
+		});
 	}
 
-	renderJobOutput(title, downloadHref, viewer) {
+	renderJobOutput({title, description, downloadHref, viewer}) {
 		return (
-			<div className="ui grid jobson-condensed-grid" key={title}>
+			<div className="ui grid jobson-condensed-grid" key={downloadHref}>
 				<div className="twelve wide column">
 					<h3 className="header">
 						{title}
 					</h3>
+					{description}
 				</div>
 
 				<div className="four wide column">
@@ -141,6 +154,7 @@ export class JobOutputsComponent extends React.Component {
 
 				<div className="sixteen wide column">
 					{viewer}
+					<div className="ui divider"></div>
 				</div>
 			</div>
 		);

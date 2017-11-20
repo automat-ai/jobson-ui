@@ -117,7 +117,7 @@ export class JobsonAPI {
   fetchJobOutputs(jobId) {
   	return this.http
 			.get(this.urlToGetJobOutputs(jobId))
-			.then(resp => JSON.parse(resp));
+			.then(resp => JSON.parse(resp).entries);
 	}
 
 
