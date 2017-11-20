@@ -189,7 +189,7 @@ export class JobListComponent extends React.Component {
 		return Helpers.renderErrorMessage(
 			"jobs",
 			this.state.jobLoadingError,
-			this.updateJobList.bind);
+			this.updateJobList.bind(this));
 	}
 
 	renderUserHasNoJobsMessage() {
