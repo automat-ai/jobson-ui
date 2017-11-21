@@ -62,31 +62,38 @@ npm run build -- --env.API_PREFIX="/customprefix"
 - Configure your webserver (e.g. Apache or nginx) to
   [reverse proxy](https://www.nginx.com/resources/admin-guide/reverse-proxy/)
   any requests beginning with `/api` (or `API_PREFIX`) to a Jobson
-  server. For example, in nginx:
+  server. For example, as an nginx `sites-available` entry 
+  (e.g. `/etc/nginx/sites-available`) in Nginx:
   
 ```
-http {
-    server {
-        server_name domain;
+server {
+	listen 80;
+	listen [::]:80;
+	
+	root /var/www/jobson-ui;
+		
+	location / {
+		# First attempt to serve request as file, then
+		# as directory, then fall back to displaying a 404.
+		try_files $uri $uri/ =404;
+	}
 
-        location / {
-            root /var/www/jobson-ui;
-        }
+	location /api {
+		# Any requests beginning with /api should be forwarded
+		# to Jobson
+		proxy_pass http://localhost:8080;
 
-        location /api {
-            # A Jobson server running locally on port 8080
-            proxy_pass http://localhost:8080;
+		# The Jobson server itself doesn't take an /api prefix
+		# (it's just used for routing), so drop it.
+		rewrite ^/api/(.*) /$1 break;
 
-            # The Jobson server doesn't use a prefix
-            rewrite ^/api/(.*) /$1 break;
-
-            # Websockets
-            proxy_http_version 1.1;
-            proxy_set_header Upgrade $http_upgrade;
-            proxy_set_header Connection "upgrade";
-            proxy_read_timeout 86400;
-        }
-    }
+		# Enable websockets, which are used for dynamic updates
+		# (Jobson UI doesn't *require* them though).
+		proxy_http_version 1.1;
+		proxy_set_header Upgrade $http_upgrade;
+		proxy_set_header Connection "upgrade";
+		proxy_read_timeout 86400;
+	}
 }
 ```
 
