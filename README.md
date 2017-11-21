@@ -1,74 +1,49 @@
 # Jobson UI
-
-Video explanation:
-
-[![Jobson Screencast](https://img.youtube.com/vi/W9yfpqWiyUg/0.jpg)](https://www.youtube.com/watch?v=W9yfpqWiyUg)
+Jobson UI is a set of static web assets that act as a frontend to 
+[Jobson](https://github.com/adamkewley/jobson).
 
 
 ## Features
 
 - Exercises all major features of the [Jobson](https://github.com/adamkewley/jobson) 
-  API
-- In-browser authentication
-- Searchable job list
-- Job submission form that is automatically generated from 
-  [Jobson](https://github.com/adamkewley/jobson) job specs
-- View job outputs and events in realtime
-- View outputs in the browser
+  HTTP and websockets API
+- Automatically generates a job submission form from [Jobson](https://github.com/adamkewley/jobson) 
+  job specs
+- Dynamically shows job progress
+- Searchable job list with basic actions (view, abort, etc.)
+- Job details page, showing all outputs and events from a job in realtime
+- Can be hosted on standard webservers such as Apache/Nginx with no additional 
+  dependencies (apart from Jobson, of course)
+ 
+Screencast:
+
+[![Jobson Screencast](https://img.youtube.com/vi/W9yfpqWiyUg/0.jpg)](https://www.youtube.com/watch?v=W9yfpqWiyUg)
 
 
-# Build
+# Install (nginx)
+This guide uses [nginx](https://www.nginx.com/) to host the assets and forward
+API requests to a Jobson server. **DANGER**: This installation method does not
+setup encryption for you. You **NEED** encryption if you are hosting Jobson 
+server over an insecure network (e.g. the internet). This is true of almost every
+webapp. See [Certbot](https://certbot.eff.org/all-instructions/) for examples 
+of how to do this for free.
 
-Jobson-UI was built using `node v6.11.4` and `npm 3.10.10`:
+- Download a [release](https://github.com/adamkewley/jobson-ui/releases) of the assets
+- Unzip the assets into a location where you host web assets (this guide 
+  assumes `/var/www/jobson-ui`)
+- Install [nginx](https://www.nginx.com/). For example, on debian:
 
 ```bash
-npm install
-npm run build
+sudo apt-get install nginx
 ```
 
-Which compiles all outputs to `public/`.
-
-
-# Using / Deploying
-
-## As a developer/small team
-
-```bash
-npm run start
-```
-
-This runs a local development webserver + reverse proxy. The reverse
-proxy assumes a Jobson server is running on `localhost:8080` (may be
-changed in `webpack.config.js`). The development server automatically
-recompiles assets as you edit them.
-
-**Note:** This isn't appropriate for a production deployment, but will
-get you going quickly.
-
-
-## In Production:
-
-- When loaded in a browser, clients (i.e. browsers) will send API
-  requests to the same server as the UI assets are served from. For
-  example, if `index.html` is hosted at `https://domain/index.html`
-  then clients will make API calls to `https://domain/api/v1/jobs`. If
-  `/api/` is already being used by something else on the same server,
-  then build the project with a custom `API_PREFIX`:
-  
-```bash
-npm run build -- --env.API_PREFIX="/customprefix"
-```
-
-- Configure your webserver (e.g. Apache or nginx) to
-  [reverse proxy](https://www.nginx.com/resources/admin-guide/reverse-proxy/)
-  any requests beginning with `/api` (or `API_PREFIX`) to a Jobson
-  server. For example, as an nginx `sites-available` entry 
-  (e.g. `/etc/nginx/sites-available`) in Nginx:
-  
+- Create an nginx virtual host by creating a file at `/etc/nginx/sites-available/jobson-ui`.
+  Paste the following into that file:
+ 
 ```
 server {
-	listen 80;
-	listen [::]:80;
+	listen 8090;
+	listen [::]:8090;
 	
 	root /var/www/jobson-ui;
 		
@@ -97,11 +72,70 @@ server {
 }
 ```
 
-- Once your webserver is configured, copy the build assets to the
-  appropriate folder (e.g. `/var/www/jobson-ui` above)
+- Change the `listen` command(s) to whichever port you want the UI to be hosted on
+- Change the `root` command to wherever you put the assets
+- Change the `proxy_pass` to wherever you are hosting a [Jobson](https://github.com/adamkewley/jobson) 
+  server (`localhost:8080` is the default)
+- Enable the site by adding a soft link in `/etc/nginx/sites-enabled`. For example:
+ 
+```bash
+cd /etc/nginx/sites-enabled
+ln -s ../sites-available/jobson-ui jobson-ui
+```
+ 
+ - Tell nginx to reload the config:
+ 
+```
+nginx -s reload
+```
+
+- You're done - you should now be able to load the UI in a browser
+ 
+ 
+# (Optional) Configure Paths
+
+When loaded in a browser, clients (i.e. browsers) will send API requests 
+to the same server as the UI assets are served from. For example, if 
+`index.html` is hosted at `https://domain/index.html` then clients will 
+make API calls to `https://domain/api/v1/jobs`. If `/api/` is already 
+being used by something else on the same server (e.g. when are using a single
+webserver to host *many* applications), then build the project from source with 
+a custom `API_PREFIX`:
   
-- **DANGER:** The Jobson API can handle client credentials. You must
-  configure your webserver to use encryption (SSL/TLS) or you are
-  heavily risking risk man-in-the-middle attacks.
+```bash
+npm install
+npm run build -- --env.API_PREFIX="/customprefix"
+```
+
+# Build
+
+Jobson UI is built using `node` (at least `v6.11.4`) and `npm`. From
+the project folder:
+
+```bash
+npm install
+npm run build
+```
+
+Which compiles all outputs to `public/`.
 
 
+# Develop
+
+Development of Jobson UI is done using a dynamic development server that
+reloads assets as they change. To run that server from the source code:
+
+```bash
+npm install
+npm run start
+```
+
+Which will run a local development webserver + reverse proxy. The reverse
+proxy assumes a Jobson server is running on `localhost:8080` (this location 
+may be changed in `webpack.config.js`). The development server automatically
+recompiles assets as you edit them.
+
+**Note:** This isn't appropriate for a production deployment. You should **always**
+use a production-grade webserver such as [nginx](https://www.nginx.com/) or 
+[Apache](https://httpd.apache.org/) in production because those webservers are: a) 
+very efficient and b) have appropriate modules for encryption, enterprise logins, etc.
