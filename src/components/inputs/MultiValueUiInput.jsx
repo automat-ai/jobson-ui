@@ -127,10 +127,11 @@ export class MultiValueUiInput extends React.Component {
 	}
 
 	onClickImportValuesFromFile() {
+    console.log("csv support");
 		Helpers.promptUserForFile("text/plain")
 			.then(Helpers.readFileAsText)
 			.then(text => text
-				.split(/\n|,/)
+				.split(/\n/)
 				.map(entry => entry.trim())
 				.filter(entry => entry.length > 0))
 			.then(importedValues => {
