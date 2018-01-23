@@ -4,7 +4,7 @@ COPY container/tmp/artifact/ /var/www/jobson-ui
 COPY jobson-ui.conf /tmp/
 
 ENV PREFIX= \
-    JOBSON_SERVER=localhost:8080
+    JOBSON_SERVER=jobson:8080
 
 RUN mkdir -p /etc/nginx/sites-available && \
     rm -f /etc/nginx/conf.d/default.conf && \
