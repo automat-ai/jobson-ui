@@ -32,6 +32,13 @@ notifyBuild([slackChannelName: null]) {
     }
 
     if (env.BRANCH_NAME == 'master') {
+
+      stage('Build artifacts') {
+        def nodeHome = tool 'Node 8.x'
+        sh "PATH=${nodeHome}/bin:${PATH} npm install"
+        sh "PATH=${nodeHome}/bin:${PATH} npm run build"
+      }
+
       stage('Build docker image') {
         sh "docker build -t ${imageName} -f container/Dockerfile ."
       }

@@ -1,6 +1,6 @@
 FROM nginx:1.12-alpine
 
-COPY container/tmp/artifact/ /var/www/jobson-ui
+COPY public/ /var/www/jobson-ui
 COPY jobson-ui.conf /tmp/
 
 ENV PREFIX= \
