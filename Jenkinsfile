@@ -50,6 +50,7 @@ notifyBuild([slackChannelName: null]) {
       stage('Deploying to Staging') {
         k8s.deploy('dmz-rad', [
             'image': imageName,
+            'host': 'overseer.staging.bot-vm.com'
         ])
       }
     }
