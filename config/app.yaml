@@ -1,0 +1,44 @@
+# Admiral v1.1.1 or higher is required to interpret this
+# deployment manifest!
+admiralVersion: 1.1.1
+
+name: jobson-ui
+app: overseer
+version: 1.0.0-{{build.gitShortHash}}
+
+host: overseer
+endpoint: /
+
+profiles:
+  dev:
+    microServices:
+    - name: jobson-runtime
+      branch: master
+      profile: dev
+    containers:
+    - image: automatai/jobson-ui:{{ build.version }}
+      env:
+      - name: JOBSON_SERVER
+        value: jobson:8080
+      ports:
+      - name: http
+        port: 8080
+  default:
+    containers:
+    - image: automatai/jobson-ui:{{ build.version }}
+      env:
+      - name: JOBSON_SERVER
+        value: jobson:8080
+      ports:
+      - name: http
+        port: 8080
+      max_memory: 100mi
+      max_cpu: 100m
+      ports:
+      - name: http
+        port: 8080
+    livenessProbe:
+        initialDelaySeconds: 25
+        periodSeconds: 60
+        path: "/"
+        port: 8080
