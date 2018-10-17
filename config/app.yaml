@@ -1,6 +1,6 @@
 # Admiral v1.1.1 or higher is required to interpret this
 # deployment manifest!
-admiralVersion: 1.1.1
+admiralVersion: 1.2.1
 
 name: jobson-ui
 app: overseer
