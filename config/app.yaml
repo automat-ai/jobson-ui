@@ -16,7 +16,7 @@ profiles:
       branch: master
       profile: dev
     containers:
-    - image: automatai/jobson-ui:{{ build.version }}
+    - image: gcr.io/staging-2017/automatai/jobson-ui:{{ build.version }}
       env:
       - name: JOBSON_SERVER
         value: jobson:8080
@@ -25,7 +25,7 @@ profiles:
         port: 8080
   default:
     containers:
-    - image: automatai/jobson-ui:{{ build.version }}
+    - image: gcr.io/staging-2017/automatai/jobson-ui:{{ build.version }}
       env:
       - name: JOBSON_SERVER
         value: jobson:8080

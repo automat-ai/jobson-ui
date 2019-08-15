@@ -21,14 +21,7 @@ notifyBuild([slackChannelName: null]) {
       println shortCommit
 
       version = "1.0.0-${shortCommit}"
-      imageName = "automatai/${appName}:${version}"
-    }
-
-    stage('Logging into docker hub') {
-      withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'private-docker-registry',
-                            usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
-        sh "docker login -u ${USERNAME} -p ${PASSWORD}"
-      }
+      imageName = "gcr.io/staging-2017/automatai/${appName}:${version}"
     }
 
     if (env.BRANCH_NAME == 'master') {
